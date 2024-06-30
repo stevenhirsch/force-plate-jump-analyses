@@ -1,13 +1,15 @@
+"""Batch processing script for study 2 - WIP, just plotting for now"""
 import os
-from JumpMetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
-from JumpMetrics.core.io import (
+import matplotlib.pyplot as plt
+# from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
+from jumpmetrics.core.io import (
     load_raw_force_data, sum_dual_force_components, find_first_frame_where_force_exceeds_threshold,
     find_takeoff_frame, get_n_seconds_before_takeoff
 )
-# from JumpMetrics.signal_processing.filters import butterworth_filter
-import pandas as pd
+# from jumpmetrics.signal_processing.filters import butterworth_filter
+# import pandas as pd
 # from tqdm import tqdm
-import matplotlib.pyplot as plt
+
 
 main_dir = os.path.join(os.getcwd(), 'analyses', 'study_2')
 sample_filepath = os.path.join(main_dir, 'F02_CTRL1_converted.txt')

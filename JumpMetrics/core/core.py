@@ -1,32 +1,40 @@
-import numpy as np  # library for dealing with arrays of numbers
-import pandas as pd  # library for loading data and creating dataframes
-import logging  # for logging errors
-import matplotlib.pyplot as plt  # for plotting data
-from scipy import signal
-from JumpMetrics.signal_processing.numerical import (
-    compute_derivative, compute_integral_of_signal, integrate_area
+"""Core class for computing jump events and metrics"""
+import logging
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from jumpmetrics.signal_processing.numerical import (
+    compute_integral_of_signal, integrate_area
 )
-from JumpMetrics.events.cmj_events import (
+from jumpmetrics.events.cmj_events import (
     find_unweighting_start, get_start_of_propulsive_phase_using_displacement,
     get_start_of_braking_phase_using_velocity, get_peak_force_event
 )
-from JumpMetrics.metrics.cmj_metrics import (
+from jumpmetrics.metrics.cmj_metrics import (
     compute_rfd, get_bodyweight, compute_average_force_between_events,
     compute_jump_height_from_net_vertical_impulse, compute_jump_height_from_takeoff_velocity
 )
 
 
 class ForceTimeCurveCMJTakeoffProcessor:
+    """Class for computing countermovement jump (CMJ) events and metrics
+    """
     def __init__(self, force_series, sampling_frequency=1000):
         self.force_series = force_series
-        if type(self.force_series) != pd.Series:
+        if not isinstance(self.force_series, pd.Series):
             self.force_series = pd.Series(self.force_series)
         self.body_weight = get_bodyweight(force_series = self.force_series)
         self.body_mass_kg = self.body_weight / 9.81
         # relevant kinematic series
         self.acceleration_series = (self.force_series - self.body_weight) / self.body_mass_kg
-        self.velocity_series = compute_integral_of_signal(self.acceleration_series, sampling_frequency=sampling_frequency)
-        self.displacement_series = compute_integral_of_signal(self.velocity_series, sampling_frequency=sampling_frequency)
+        self.velocity_series = compute_integral_of_signal(
+            self.acceleration_series,
+            sampling_frequency=sampling_frequency
+        )
+        self.displacement_series = compute_integral_of_signal(
+            self.velocity_series,
+            sampling_frequency=sampling_frequency
+        )
         self.time = pd.Series((self.force_series.index + 1) / sampling_frequency)
         # extra variables to be used in other functions
         self.sampling_frequency = sampling_frequency
@@ -41,7 +49,9 @@ class ForceTimeCurveCMJTakeoffProcessor:
         self.start_of_propulsive_phase = None
         self.peak_force_frame = None
 
-    def get_jump_events(self, velocity_threshold_to_define_start_of_jump=0.03):
+    def get_jump_events(self):
+        """Function to get jump events for a ForceTimeCurveCMJTakeoffProcessor Class
+        """
         self.start_of_unweighting_phase = find_unweighting_start(
             force_data=self.force_series,
             sample_rate=self.sampling_frequency,
@@ -60,7 +70,18 @@ class ForceTimeCurveCMJTakeoffProcessor:
         )
 
     def compute_jump_metrics(self):
-        events_list = [self.start_of_unweighting_phase, self.start_of_braking_phase, self.start_of_propulsive_phase, self.peak_force_frame]
+        """Function to compute CMJ metrics
+
+        Raises:
+            ValueError: If any events are None, a ValueError is raised since metrics cannot
+            be defined without events
+        """
+        events_list = [
+            self.start_of_unweighting_phase,
+            self.start_of_braking_phase,
+            self.start_of_propulsive_phase,
+            self.peak_force_frame
+        ]
         if any(value is None for value in events_list):
             raise ValueError(f"The following events need to be defined first: {events_list}")
         else:
@@ -133,7 +154,10 @@ class ForceTimeCurveCMJTakeoffProcessor:
                     signal=self.force_series_minus_bodyweight.iloc[self.start_of_braking_phase:self.peak_force_frame]
                 )
             else:
-                logging.warning(f"Peak force occurred before or at the start of the braking phase, so impulse between events is invalid")
+                logging.warning(
+                    """Peak force occurred before or at the start of the braking phase,
+                    so impulse between events is invalid"""
+                )
                 self.jump_metrics['braking_net_vertical_impulse'] = np.nan
             if self.peak_force_frame > self.start_of_propulsive_phase:
                 self.jump_metrics['propulsive_net_vertical_impulse'] = integrate_area(
@@ -141,15 +165,23 @@ class ForceTimeCurveCMJTakeoffProcessor:
                     signal=self.force_series_minus_bodyweight.iloc[self.start_of_propulsive_phase:self.peak_force_frame]
                 )
             else:
-                logging.warning(f"Peak force occurred before or at the start of the propulsive phase, so impulse between events is invalid")
+                logging.warning(
+                    """Peak force occurred before or at the start of the propulsive phase,
+                    so impulse between events is invalid"""
+                )
                 self.jump_metrics['propulsive_net_vertical_impulse'] = np.nan
             if self.start_of_propulsive_phase > self.start_of_braking_phase:
                 self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = integrate_area(
                     time=self.time.iloc[self.start_of_braking_phase:self.start_of_propulsive_phase],
-                    signal=self.force_series_minus_bodyweight.iloc[self.start_of_braking_phase:self.start_of_propulsive_phase]
+                    signal=self.force_series_minus_bodyweight.iloc[
+                        self.start_of_braking_phase:self.start_of_propulsive_phase
+                    ]
                 )
             else:
-                logging.warning(f"Braking phase occured before or at the start of the propulsive phase, so impulse between events is invalid")
+                logging.warning(
+                    """Braking phase occured before or at the start of the propulsive phase,
+                    so impulse between events is invalid"""
+                )
                 self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = np.nan
 
             self.jump_metrics['total_net_vertical_impulse'] = integrate_area(
@@ -175,25 +207,51 @@ class ForceTimeCurveCMJTakeoffProcessor:
                 net_vertical_impulse=self.jump_metrics['total_net_vertical_impulse'].item(),
                 body_mass_kg=self.body_mass_kg
             )
-            self.jump_metrics['movement_time'] = (self.peak_force_frame - self.start_of_unweighting_phase) / self.sampling_frequency
-            self.jump_metrics['unweighting_time'] = (self.start_of_braking_phase - self.start_of_unweighting_phase) / self.sampling_frequency
-            self.jump_metrics['braking_time'] = (self.start_of_propulsive_phase - self.start_of_braking_phase) / self.sampling_frequency
-            self.jump_metrics['propulsive_time'] = (self.peak_force_frame - self.start_of_propulsive_phase) / self.sampling_frequency
+            self.jump_metrics['movement_time'] = (
+                self.peak_force_frame - self.start_of_unweighting_phase
+            ) / self.sampling_frequency
+            self.jump_metrics['unweighting_time'] = (
+                self.start_of_braking_phase - self.start_of_unweighting_phase
+            ) / self.sampling_frequency
+            self.jump_metrics['braking_time'] = (
+                self.start_of_propulsive_phase - self.start_of_braking_phase
+            ) / self.sampling_frequency
+            self.jump_metrics['propulsive_time'] = (
+                self.peak_force_frame - self.start_of_propulsive_phase
+            ) / self.sampling_frequency
             self.jump_metrics['lowering_displacement'] = np.min(self.displacement_series)
             self.jump_metrics['frame_start_of_unweighting_phase'] = self.start_of_unweighting_phase
             self.jump_metrics['frame_start_of_breaking_phase'] = self.start_of_braking_phase
             self.jump_metrics['frame_start_of_propulsive_phase'] = self.start_of_propulsive_phase
             self.jump_metrics['frame_peak_force'] = self.peak_force_frame
 
-    def create_jump_metrics_dataframe(self, pid):
+    def create_jump_metrics_dataframe(self, pid: str):
+        """Create a jump metrics dataframe
+
+        Args:
+            pid (str): Participant ID
+
+        Raises:
+            ValueError: Raises if `compute_jump_metrics()` is not run before trying to create a dataframe
+        """
         if not self.jump_metrics:
             raise ValueError("Must run `compute_jump_metrics()` before creating a dataframe")
         else:
             self.jump_metrics_dataframe['PID'] = [pid]
-            self.jump_metrics_dataframe = pd.concat([self.jump_metrics_dataframe, pd.DataFrame(self.jump_metrics, index=[0])], axis=1)
+            self.jump_metrics_dataframe = pd.concat(
+                [self.jump_metrics_dataframe, pd.DataFrame(self.jump_metrics, index=[0])],
+                axis=1
+            )
 
-    def plot_waveform(self, waveform_type, title=None, savefig=False, figname=None):
-        # valid_waveform_types = ['force', 'acceleration', 'velocity', 'displacement']
+    def plot_waveform(self, waveform_type: str, title=None, savefig: bool =False, figname=None):
+        """Function to plot waveforms
+
+        Args:
+            waveform_type (str): Type of waveform to plot
+            title (str, optional): Title of the plot. Defaults to None.
+            savefig (bool, optional): Whether the function should save the figure. Defaults to False.
+            figname (str, optional): Filename for the figure. Defaults to None.
+        """
         waveform_dict = {
             # waveform_type: (waveform, ylabel)
             'force': (self.force_series, 'Ground Reaction Force (N)'),
@@ -201,43 +259,75 @@ class ForceTimeCurveCMJTakeoffProcessor:
             'velocity': (self.velocity_series, 'Velocity (m/s)'),
             'displacement': (self.displacement_series, 'Displacement (m)')
         }
-        if waveform_type not in waveform_dict.keys():
+        if waveform_type not in waveform_dict:
             raise ValueError(f"{waveform_type} is invalid. Please specify one of: {waveform_dict.keys()}.")
         else:
             waveform, ylabel = waveform_dict[waveform_type]
             plt.plot(self.time, waveform)
             if waveform_type == 'force':
-                plt.axhline(self.body_weight, color='red', linestyle='--', label=f'Bodyweight ({round(self.body_weight, 2)}N)')
+                plt.axhline(
+                    self.body_weight,
+                    color='red',
+                    linestyle='--',
+                    label=f'Bodyweight ({round(self.body_weight, 2)}N)'
+                )
             if self.start_of_unweighting_phase is not None:
-                plt.axvline(self.start_of_unweighting_phase / self.sampling_frequency, color='green', label='Start of Unweighting Phase')
+                plt.axvline(
+                    self.start_of_unweighting_phase / self.sampling_frequency,
+                    color='green',
+                    label='Start of Unweighting Phase'
+                )
             if self.start_of_braking_phase is not None:
-                plt.axvline(self.start_of_braking_phase / self.sampling_frequency, color='yellow', label='Start of Braking Phase')
+                plt.axvline(
+                    self.start_of_braking_phase / self.sampling_frequency,
+                    color='yellow',
+                    label='Start of Braking Phase'
+                )
             if self.start_of_propulsive_phase is not None:
-                plt.axvline(self.start_of_propulsive_phase / self.sampling_frequency, color='orange', label='Start of Propulsive Phase')
+                plt.axvline(
+                    self.start_of_propulsive_phase / self.sampling_frequency,
+                    color='orange',
+                    label='Start of Propulsive Phase'
+                )
             if self.peak_force_frame is not None:
-                plt.axvline(self.peak_force_frame / self.sampling_frequency, color='blue', linestyle='--', label='Peak Force')
+                plt.axvline(
+                    self.peak_force_frame / self.sampling_frequency,
+                    color='blue',
+                    linestyle='--',
+                    label='Peak Force'
+                )
                 plt.legend()
-            if title is not None and type(title) == str:
+            if title is not None and isinstance(title, str):
                 plt.title(title)
             plt.ylabel(ylabel)
             plt.xlabel('Time (sec)')
-            if type(savefig) != bool:
+            if not isinstance(savefig, bool):
                 raise ValueError('savefig must be set to true or false (i.e., a boolean)')
-            elif savefig == False:
+            elif savefig is False:
                 plt.show()
-            elif savefig == True and (figname is None or type(figname) != str):
+            elif savefig is True and (figname is None or not isinstance(figname, str)):
                 raise ValueError('If specifying savefig, please provide a valid filename as a string')
             else:
                 plt.savefig(figname, dpi=300)
                 plt.close()
 
-    def save_jump_metrics_dataframe(self, dataframe_filepath):
+    def save_jump_metrics_dataframe(self, dataframe_filepath: str):
+        """Function to save the jump metrics dataframe as a csv
+
+        Args:
+            dataframe_filepath (str): filename for the resulting csv
+
+        Raises:
+            ValueError: If the dataframe is empty, don't save it
+        """
         if len(self.jump_metrics_dataframe) == 0:
             raise ValueError("Must run `create_dataframe` before trying to save a dataframe")
         else:
             self.jump_metrics_dataframe.to_csv(dataframe_filepath, index=False)
 
     def create_kinematic_dataframe(self):
+        """Function to create a dataframe of the kinematic data
+        """
         self.kinematic_waveform_dataframe = pd.DataFrame({
             # 'pid': [pid] * len(self.force_series),
             'acceleration': self.acceleration_series,
@@ -245,7 +335,15 @@ class ForceTimeCurveCMJTakeoffProcessor:
             'displacement': self.displacement_series
         })
 
-    def save_kinematic_dataframe(self, dataframe_filepath):
+    def save_kinematic_dataframe(self, dataframe_filepath: str):
+        """Function to save the kinematic dataframe
+
+        Args:
+            dataframe_filepath (str): Filepath name for the kinematic dataframe
+
+        Raises:
+            ValueError: Raises error if `create_dataframe()` was not run beforehand
+        """
         if len(self.kinematic_waveform_dataframe) == 0:
             raise ValueError("Must run `create_dataframe` before trying to save a dataframe")
         else:

@@ -1,9 +1,10 @@
+"""Batch processing script for study 1"""
 import os
-from JumpMetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
-from JumpMetrics.core.io import load_cropped_force_data
-from JumpMetrics.signal_processing.filters import butterworth_filter
 import pandas as pd
 from tqdm import tqdm
+from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
+from jumpmetrics.core.io import load_cropped_force_data
+from jumpmetrics.signal_processing.filters import butterworth_filter
 
 
 main_dir = os.path.join(os.getcwd(), 'analyses', 'study_1')
@@ -16,20 +17,21 @@ full_dataset = pd.DataFrame()
 
 for filename in tqdm(all_filenames):
     filepath = os.path.join(data_dir, filename)
-    file_prefix = '_'.join(filename.split('_')[0:2])
-    pid = file_prefix.split('_')[0]
-    trial_num = file_prefix.split('_')[1]
+    FILE_PREFIX = '_'.join(filename.split('_')[0:2])
+    # pid = FILE_PREFIX.split('_')[0]
+    pid = FILE_PREFIX.split('_', maxsplit=1)[0]
+    trial_num = FILE_PREFIX.split('_')[1]
     pid_fig_dir = os.path.join(fig_dir, pid, trial_num)
     if not os.path.exists(pid_fig_dir):
         os.makedirs(pid_fig_dir)
-    participant_filters = xlsx_data[xlsx_data['file_prefix'] == file_prefix]
+    participant_filters = xlsx_data[xlsx_data['file_prefix'] == FILE_PREFIX]
     for col in participant_filters.columns:
         if col == 'file_prefix':
             continue
         else:
             try:
                 tmp_df = pd.DataFrame()
-                tmp_df['file_prefix'] = [file_prefix]
+                tmp_df['file_prefix'] = [FILE_PREFIX]
                 tmp_df['cutoff_type'] = [col]
                 cutoff_frequency = participant_filters[col].item()
                 tmp_df['cutoff_frequency'] = [cutoff_frequency]
@@ -48,9 +50,7 @@ for filename in tqdm(all_filenames):
                     force_series=filtered_force_series[-4000:],
                     sampling_frequency=2000
                 )
-                CMJ.get_jump_events(
-                    velocity_threshold_to_define_start_of_jump=0.03
-                )
+                CMJ.get_jump_events()
                 CMJ.compute_jump_metrics()
                 CMJ.create_jump_metrics_dataframe(pid=pid)
                 CMJ.create_kinematic_dataframe()
@@ -66,8 +66,10 @@ for filename in tqdm(all_filenames):
                 full_dataset = pd.concat([
                     full_dataset, tmp_df
                 ], axis=0)
-            except ValueError:
+            except ValueError as e:
                 print(f'Skipping {filename}, {col} due to ValueError')
+                print('')
+                print(f"Specific ValueErrror: {e}")
                 CMJ.plot_waveform(waveform_type='force', title=filename + '_' + col)
 
 processed_file_name = os.path.join(main_dir, 'batch_processed_data.csv')

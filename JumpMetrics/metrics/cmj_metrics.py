@@ -1,16 +1,41 @@
+"""Functions to compute CMJ metrics"""
+import logging
 import numpy as np
-import logging  # for logging errors
-from JumpMetrics.signal_processing.numerical import (
+from jumpmetrics.signal_processing.numerical import (
     compute_derivative
 )
 
 
-# get bodyweight (assumes first n frames are "static" and represent someone's bodyweight in Newtons)
-def get_bodyweight(force_series, n=500):
+def get_bodyweight(force_series, n: int = 500) -> float:
+    """Function to compute someone's bodyweight based on their static stance. The first n frames
+    are assumed to be "static"
+
+    Args:
+        force_series (array): Force series of a CMJ
+        n (int, optional): Number of frames. Defaults to 500.
+
+    Returns:
+        float: Bodyweight in Newtons
+    """
     average_of_first_n_frames = force_series.iloc[0:n].mean()
     return average_of_first_n_frames
 
-def compute_rfd(force_trace, window_start, window_end, sampling_frequency, method='average'):
+def compute_rfd(
+    force_trace, window_start: int, window_end: int, sampling_frequency: float, method: str = 'average'
+) -> float:
+    """Function to compute rate of force development (RFD) during a jump between specific windows and using 
+    various methods.
+
+    Args:
+        force_trace (array): Force series
+        window_start (int): Start of the window for computing RFD
+        window_end (int): End of the window for computing RFD
+        sampling_frequency (float): Sampling frequency of the force plate
+        method (str, optional): Method for computing RFD. Defaults to 'average'.
+
+    Returns:
+        float: RFD in Newtons per second
+    """
     if window_end <= window_start:
         logging.warning("window_end is before or equal to window_start, so RFD will be invalid. Returning np.nan")
         return np.nan
@@ -29,28 +54,67 @@ def compute_rfd(force_trace, window_start, window_end, sampling_frequency, metho
         else:
             rfd = np.mean(rfd_between_events)
     else:
-        logging.error(f"{method} is not a valid method. Please select one of: {valid_methods}")
+        logging.error("%s is not a valid method. Please select one of: %s", method, valid_methods)
         rfd = None
 
     return rfd
 
-def compute_jump_height_from_takeoff_velocity(takeoff_velocity):
+def compute_jump_height_from_takeoff_velocity(takeoff_velocity: float) -> float:
+    """Function to compute jump height based on someone's takeoff velocity
+
+    Args:
+        takeoff_velocity (float): Takeoff velocity of a jump
+
+    Returns:
+        float: Jump height in meters
+    """
     jump_height = (takeoff_velocity ** 2) / (2 * 9.81)
     return jump_height
 
-def compute_jump_height_from_velocity_series(velocity_series):
+def compute_jump_height_from_velocity_series(velocity_series: float) -> float:
+    """Function to compute jump height from the last value of a velocity series
+    before takeoff.
+
+    Args:
+        velocity_series (float): Array of movement velocities
+
+    Returns:
+        float: Jump height in meters
+    """
     takeoff_velocity = velocity_series[-1]  # take the last frame
     jump_height = compute_jump_height_from_takeoff_velocity(takeoff_velocity)
     return jump_height
 
-def compute_jump_height_from_net_vertical_impulse(net_vertical_impulse, body_mass_kg):
+def compute_jump_height_from_net_vertical_impulse(net_vertical_impulse: float, body_mass_kg: float) -> float:
+    """Function to compute the jump height from the net vertical impulse of a CMJ
+
+    Args:
+        net_vertical_impulse (float): Net vertical impulse of a jump
+        body_mass_kg (float): Participants' body mass (in KG)
+
+    Returns:
+        float: Jump height in meters
+    """
     impulse_takeoff_velocity = net_vertical_impulse / body_mass_kg  # impulse = momentum = mass * velocity
     jump_height = compute_jump_height_from_takeoff_velocity(takeoff_velocity=impulse_takeoff_velocity)
     return jump_height
 
-def compute_average_force_between_events(force_trace, window_start, window_end):
+def compute_average_force_between_events(force_trace, window_start: int, window_end: int) -> float:
+    """Function to compute the average force between two events
+
+    Args:
+        force_trace (array): Force series
+        window_start (int): Frame corresponding to the start of when to compute average force
+        window_end (int): Frame corresponding to the end of when to compute average force
+
+    Returns:
+        float: Average force between the events, in Newtons
+    """
     if window_end <= window_start and window_end > 0:
-        logging.warning(f"window_end occurred before or at the same time as window_start, so average force between events is invalid. Returning np.nan")
+        logging.warning(
+            """window_end occurred before or at the same time as window_start,
+            so average force between events is invalid. Returning np.nan"""
+        )
         return np.nan
     average_force = force_trace.iloc[window_start:window_end].mean()
     return average_force

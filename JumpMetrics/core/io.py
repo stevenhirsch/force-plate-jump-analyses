@@ -1,3 +1,4 @@
+"""IO functions"""
 import logging  # for logging errors
 import pandas as pd
 import numpy as np
@@ -18,30 +19,32 @@ def load_cropped_force_data(filepath: str, freq=None) -> pd.Series:
     try:
         df = pd.read_csv(filepath, delimiter='\t', skiprows=[0, 2, 3, 4])
     except FileNotFoundError:
-        logging.error(f"The file at '{filepath}' was not found.")
+        logging.error("The file at %s was not found.", filepath)
         return None
     except pd.errors.ParserError as e:
-        logging.error(f"Parsing error while reading the file: {e}")
+        logging.error("Parsing error while reading the file: %s", e)
         return None
-    except Exception as e:
-        logging.error(f"An unexpected error occurred while reading the file: {e}")
-        return None
+    # except Exception as e:
+    #     logging.error("An unexpected error occurred while reading the file: %s", e)
+    #     return None
     if freq is None:
         colname = 'FZsum'
     else:
         colname = f'FZsum_{freq}Hz'
     if colname not in df.columns:
-        logging.warning(f"Column '{colname}' not found in the dataframe. Available columns: {df.columns.tolist()}")
+        logging.warning(
+            "Column '%s' not found in the dataframe. Available columns: %s", colname, df.columns.tolist()
+        )
         return None
 
     try:
         force_data = df[colname]
     except KeyError:
-        logging.warning(f"Key '{colname}' not found in the dataframe.")
+        logging.warning("Key %s not found in the dataframe.", colname)
         return None
-    except Exception as e:
-        logging.error(f"An unexpected error occurred while accessing the column: {e}")
-        return None
+    # except Exception as e:
+    #     logging.error(f"An unexpected error occurred while accessing the column: {e}")
+    #     return None
 
     return force_data
 
@@ -58,15 +61,15 @@ def load_raw_force_data(filepath: str) -> pd.DataFrame:
     try:
         df = pd.read_csv(filepath, delimiter='\t', skiprows=[0, 2, 3, 4])
     except FileNotFoundError:
-        logging.error(f"The file at '{filepath}' was not found.")
+        logging.error("The file at %s was not found.", filepath)
         return None
     except pd.errors.ParserError as e:
-        logging.error(f"Parsing error while reading the file: {e}")
+        logging.error("Parsing error while reading the file: %s", e)
         return None
-    except Exception as e:
-        logging.error(f"An unexpected error occurred while reading the file: {e}")
-        return None
-    
+    # except Exception as e:
+    #     logging.error("An unexpected error occurred while reading the file: %s", e)
+    #     return None
+
     if 'Unnamed: 0' in df.columns:
         df.drop('Unnamed: 0', axis=1, inplace=True)
     return df
@@ -105,7 +108,10 @@ def find_first_frame_where_force_exceeds_threshold(force_trace: pd.Series, thres
     # Can set a nice threshold if you have participants' body mass a priori, for example
     frames_where_force_exceeds_threshold = np.where(force_trace >= threshold)[0]
     if len(frames_where_force_exceeds_threshold) == 0:
-        logging.warning(f'No frames detected that exceeded the specified threshold of {threshold}, returning -1')
+        logging.warning(
+            """No frames detected that exceeded the specified threshold of %s, returning -1""",
+            threshold
+        )
         return -1
     first_frame_where_force_exceeds_threshold = frames_where_force_exceeds_threshold[0]
     return first_frame_where_force_exceeds_threshold
@@ -128,10 +134,10 @@ def find_takeoff_frame(
     """
     # Convert time threshold to number of samples
     sample_threshold = int(flight_time_threshold * sampling_frequency)
-    
+
     # Initialize counter for consecutive low-force samples
     consecutive_low_force_samples = 0
-    
+
     for index, force in force_trace.items():
         if abs(force) < force_threshold:
             consecutive_low_force_samples += 1
@@ -140,7 +146,7 @@ def find_takeoff_frame(
                 return int(force_trace.index[force_trace.index.get_loc(index) - sample_threshold + 1])
         else:
             consecutive_low_force_samples = 0
-    
+
     # If we get here, no takeoff was detected
     return None
 
@@ -161,12 +167,12 @@ def get_n_seconds_before_takeoff(
     """
     # Calculate the number of samples for n seconds
     n_samples = int(n * sampling_frequency)
-    
+
     # Get the integer location of the takeoff frame
     takeoff_loc = force_trace.index.get_loc(takeoff_frame)
-    
+
     # Calculate the start location
     start_loc = max(0, takeoff_loc - n_samples)
-    
+
     # Slice the force_trace
     return force_trace.iloc[start_loc:takeoff_loc].reset_index(drop=True)
