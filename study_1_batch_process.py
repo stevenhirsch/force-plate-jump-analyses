@@ -1,17 +1,17 @@
-import sys
 import os
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
-from core.core import load_force_data, butterworth_filter, ForceTimeCurveCMJTakeoffProcessor
+from JumpMetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
+from JumpMetrics.core.io import load_cropped_force_data
+from JumpMetrics.signal_processing.filters import butterworth_filter
 import pandas as pd
 from tqdm import tqdm
 
 
-main_dir = os.getcwd()
+main_dir = os.path.join(os.getcwd(), 'analyses', 'study_1')
 data_dir = os.path.join(main_dir, 'raw_data')
 fig_dir = os.path.join(main_dir, 'figures')
 all_filenames = os.listdir(data_dir)
-xlsx_data = pd.read_excel('signal_conditioning_filter_cutoffs.xlsx')
+xlsx_data_filepath = os.path.join(main_dir, 'signal_conditioning_filter_cutoffs.xlsx')
+xlsx_data = pd.read_excel(xlsx_data_filepath)
 full_dataset = pd.DataFrame()
 
 for filename in tqdm(all_filenames):
@@ -22,8 +22,6 @@ for filename in tqdm(all_filenames):
     pid_fig_dir = os.path.join(fig_dir, pid, trial_num)
     if not os.path.exists(pid_fig_dir):
         os.makedirs(pid_fig_dir)
-    # if 'F02' not in file_prefix:
-    #     continue
     participant_filters = xlsx_data[xlsx_data['file_prefix'] == file_prefix]
     for col in participant_filters.columns:
         if col == 'file_prefix':
@@ -35,7 +33,7 @@ for filename in tqdm(all_filenames):
                 tmp_df['cutoff_type'] = [col]
                 cutoff_frequency = participant_filters[col].item()
                 tmp_df['cutoff_frequency'] = [cutoff_frequency]
-                force_series = load_force_data(
+                force_series = load_cropped_force_data(
                     filepath=filepath,
                     freq=None
                 )
@@ -53,7 +51,6 @@ for filename in tqdm(all_filenames):
                 CMJ.get_jump_events(
                     velocity_threshold_to_define_start_of_jump=0.03
                 )
-                # CMJ.plot_waveform(waveform_type='force', title=filename)
                 CMJ.compute_jump_metrics()
                 CMJ.create_jump_metrics_dataframe(pid=pid)
                 CMJ.create_kinematic_dataframe()
@@ -69,10 +66,6 @@ for filename in tqdm(all_filenames):
                 full_dataset = pd.concat([
                     full_dataset, tmp_df
                 ], axis=0)
-                # CMJ.jump_metrics_dataframe
-            # except IndexError as e:
-            #     print(f"Index Error: {e}")
-            #     print(f'Skipping {filename}, {col}')
             except ValueError:
                 print(f'Skipping {filename}, {col} due to ValueError')
                 CMJ.plot_waveform(waveform_type='force', title=filename + '_' + col)
