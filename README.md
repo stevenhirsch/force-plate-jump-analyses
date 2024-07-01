@@ -7,7 +7,7 @@
 **force-plate-jump-analyses** is a set of functions and tools for analyzing (countermovement) jump data collected using force plates. The package provides comprehensive analyses to help in understanding various aspects of jump performance and mechanics and helps with batch processing jump trials.
 
 ## Features
-- Batch processing of CMJ data from `.txt` files.
+- Batch processing of CMJ data from `.txt` files exported from force plates.
 - Automated data cropping, events, metrics, and visualization tools.
 - Easy-to-use functions for detailed jump performance insights.
 - Extensible framework for additional analysis and custom data processing.
@@ -31,7 +31,12 @@
 
 3. Activate the environment:
     ```
-    conda activate jump-analysis
+    conda activate jumpmetrics
+    ```
+
+4. Optionally, for extra pacakges used for local development, run:
+    ```
+    conda env update -f local_env.yml
     ```
 
 ## Building the Package
@@ -57,11 +62,6 @@ If you want to build the package for installation, you can do so using `python -
     ls dist/
     ```
 
-### Example Usage
-```
-python -m build
-ls dist/
-```
 
 ### Installing the Built Package
 To install the built package locally, use `pip` with the path to the `.whl` file:
@@ -77,7 +77,7 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 -->
 
 ## Batch Processing Data
-Examples of how to batch process data are found in `study_1_batch_process.py` and `study_2_batch_process.py`. You can run both with a command such as:
+Examples of how to batch process data are found in `study_1_batch_process.py` and `study_2_batch_process.py`. You can run eithet file with a command such as:
 ```
 python study_1_batch_process.py
 ```

@@ -17,8 +17,8 @@ classifiers = [
 requires-python = ">=3.8"  # Add this line
 dependencies = [  # Add your dependencies here
     "pip>=22.2",
-    "pandas==1.5.*",
-    "scipy==1.9.*",
+    "pandas==2.0.*",
+    "scipy==1.10.*",
     "matplotlib==3.7.*",
     "scikit-learn==1.3.*"
 ]
