@@ -1,3 +1,4 @@
+"""Functions for low-pass filtering data"""
 from scipy import signal
 import numpy as np
 
@@ -17,6 +18,10 @@ def butterworth_filter(
     Returns:
         np.ndarray: Filtered signal
     """
+    if len(arr) < 2:
+        raise ValueError('Length of input array must be at least two frames')
+    if arr.ndim != 1:
+        raise ValueError('Input shape must be one dimensional')
     w = cutoff_frequency / (fps / 2)  # Normalize the frequency
     b, a = signal.butter(order, w, 'low')
     if len(arr) - 1 < fps:  # i.e., the length of the arr is less than 1 second

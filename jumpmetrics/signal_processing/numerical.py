@@ -183,13 +183,13 @@ def compute_integral_of_signal(
         original_signal = original_signal.to_numpy()
     elif not isinstance(original_signal, np.ndarray):
         original_signal = np.array(original_signal)
-    
+
     # Compute the time interval
     dt = 1.0 / sampling_frequency
-    
-    # Compute cumulative velocity using `numpy.trapz` for each time step
+
+    # Compute cumulative integral using `numpy.cumsum`
     integrated_signal = np.zeros_like(original_signal)
-    for i in range(1, len(original_signal)):
-        integrated_signal[i] = initial_value + np.trapz(original_signal[:i+1], dx=dt)
-    
+    integrated_signal[0] = initial_value
+    integrated_signal[1:] = initial_value + np.cumsum(0.5 * (original_signal[1:] + original_signal[:-1]) * dt)
+
     return integrated_signal

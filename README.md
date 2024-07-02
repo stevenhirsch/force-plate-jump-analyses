@@ -69,10 +69,10 @@ To install the built package locally, use `pip` with the path to the `.whl` file
 
 `pip install dist/jumpmetrics-0.1.0-py3-none-any.whl`
 
-<!-- 
-## Detailed Documentation
-For a complete guide on available functions and their usage, please refer to the [Documentation](./docs).
 
+## Detailed Documentation
+For a complete guide on available functions and their usage, please refer to the [Documentation](./docs/index.md).
+<!-- 
 ## Contributing
 We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) to learn how you can help improve this project.
 -->

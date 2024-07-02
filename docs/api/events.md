@@ -18,7 +18,7 @@ Identifies the start of the unweighting phase in a countermovement jump using fo
 - `window_size (float, optional)`: Size of the window (in seconds) for the Savitzky-Golay filter. Defaults to 0.2 seconds.
 - `duration_check (float, optional)`: Number of seconds to check if the person is unweighting. Defaults to 0.1 seconds.
 
-One thing to note is that the method of finding this unweighting phase is based largely on the method outlined in [Owen et al. (2014)](https://journals.lww.com/nsca-jscr/fulltext/2014/06000/development_of_a_criterion_method_to_determine.8.aspx), which was highlighted by [McMahon et al. (2018)](https://journals.lww.com/nsca-scj/fulltext/2018/08000/Understanding_the_Key_Phases_of_the.10.aspx?casa_token=ebRHgNsbZ8oAAAAA:zhLpS7rrORCZWHesIP2TzfvEHVXoHMhKL9xsfE-p4Qk73EXINHbQd1j2s3oK8TCN_DZyJuBgP8_Wurzh6VWSfwTsEg)
+One thing to note is that the method of finding this unweighting phase is based largely on the method outlined in [Owen et al. (2014)](https://journals.lww.com/nsca-jscr/fulltext/2014/06000/development_of_a_criterion_method_to_determine.8.aspx), which was highlighted by [McMahon et al. (2018)](https://journals.lww.com/nsca-scj/fulltext/2018/08000/Understanding_the_Key_Phases_of_the.10.aspx?casa_token=ebRHgNsbZ8oAAAAA:zhLpS7rrORCZWHesIP2TzfvEHVXoHMhKL9xsfE-p4Qk73EXINHbQd1j2s3oK8TCN_DZyJuBgP8_Wurzh6VWSfwTsEg).
 
 **Returns**:
 - `int`: Frame number corresponding to the start of the unweighting phase.
