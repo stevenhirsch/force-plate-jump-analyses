@@ -19,7 +19,7 @@ from jumpmetrics.metrics.cmj_metrics import (
 class ForceTimeCurveCMJTakeoffProcessor:
     """Class for computing countermovement jump (CMJ) events and metrics
     """
-    def __init__(self, force_series, sampling_frequency=1000):
+    def __init__(self, force_series, sampling_frequency=2000):
         self.force_series = force_series
         if not isinstance(self.force_series, pd.Series):
             self.force_series = pd.Series(self.force_series)

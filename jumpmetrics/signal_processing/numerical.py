@@ -3,7 +3,20 @@ from scipy.integrate import simps  # Simpson's method for computing integral
 import pandas as pd
 
 
-def integrate_area(time, signal, method='trapezoidal'):
+def integrate_area(time, signal, method='trapezoidal') -> np.ndarray:
+    """Functino to compute the area under a curve using the integral
+
+    Args:
+        time (array): Array of timestamps
+        signal (array): Array of the signal to integrate over time
+        method (str, optional): Integration method. Defaults to 'trapezoidal'.
+
+    Raises:
+        ValueError: Raised if the method is not trapezoidal or Simpson's
+
+    Returns:
+        np.ndarray: Area under the curve
+    """
     # Ensure time and signal are numpy arrays
     time = np.asarray(time)
     signal = np.asarray(signal)
@@ -19,7 +32,7 @@ def integrate_area(time, signal, method='trapezoidal'):
 
     return area
 
-def get_finite_difference_coefficients(d, order_accuracy):
+def get_finite_difference_coefficients(d: int, order_accuracy: int) -> np.ndarray:
         '''
         Compute the coefficients for the finite difference equation corresponding to the derivative, d, to a 
         specified order of accuracy.
@@ -76,15 +89,16 @@ def get_finite_difference_coefficients(d, order_accuracy):
         coefficients = np.matmul(np.linalg.inv(matrix), vec)
             
         
-        ## Uncommenting the code below will add a tolerance to force what "should be" zero values to return as 0.
-        ## If uncommenting, you can adjust the tolerance to whatever you feel may be more appropriate.
+        # Uncommenting the code below will add a tolerance to force what "should be" zero values
+        # to return as 0.
+        # If uncommenting, you can adjust the tolerance to whatever you feel may be more appropriate.
         
-        #tolerance = 1e-10
-        #coefficients[abs(coefficients.real) < tolerance] = 0
+        # tolerance = 1e-10
+        # coefficients[abs(coefficients.real) < tolerance] = 0
 
         return coefficients
 
-def compute_derivative(signal, t, d, order_accuracy=2):
+def compute_derivative(signal, t: float, d: int, order_accuracy: int=2) -> np.ndarray:
     '''
     Compute the derivative, d,  of a signal over a constant time/sampling interval, t, using n points prior to
     and following the frame of interest.
@@ -149,7 +163,21 @@ def compute_derivative(signal, t, d, order_accuracy=2):
 
     return derivative
 
-def compute_integral_of_signal(original_signal, sampling_frequency, initial_value=0.0):
+def compute_integral_of_signal(
+    original_signal: np.ndarray, sampling_frequency: float, initial_value: float=0.0
+) -> np.ndarray:
+    """Computes the integrated time series of a signal. For example, to compute the velocity
+    waveform from an acceleration waveform
+
+    Args:
+        original_signal (np.ndarray): Original signal to integrate
+        sampling_frequency (float): Sampling frequency (frames per second) of the signal
+        initial_value (float, optional): Initial value when computing the instantaneous integral.
+        Defaults to 0.0.
+
+    Returns:
+        np.ndarray: Integrated series
+    """
     # Ensure the input is a numpy array
     if isinstance(original_signal, pd.Series):
         original_signal = original_signal.to_numpy()

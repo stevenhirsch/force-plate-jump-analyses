@@ -8,6 +8,7 @@
 
 ## Features
 - Batch processing of CMJ data from `.txt` files exported from force plates.
+- Signal processing and filtering
 - Automated data cropping, events, metrics, and visualization tools.
 - Easy-to-use functions for detailed jump performance insights.
 - Extensible framework for additional analysis and custom data processing.
