@@ -15,7 +15,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: jumpmetrics
-        environment-file: env.yaml
+        environment-file: env.yml
         python-version: 3.9
         auto-activate-base: false
     - name: Install dependencies
