@@ -75,6 +75,29 @@ def load_raw_force_data(filepath: str) -> pd.DataFrame:
     return df
 
 
+def load_raw_force_data_with_no_column_headers(filepath: str) -> pd.DataFrame:
+    try:
+        # Read the file, skip the first blank line, and use comma as delimiter
+        df = pd.read_csv(filepath, delimiter=',', header=None, skiprows=1)
+
+        # Strip whitespace from all cells
+        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+        # Define column names
+        cols = ['FX1', 'FY1', 'FZ1', 'MX1', 'MY1', 'MZ1', 'FX2', 'FY2', 'FZ2', 'MX2', 'MY2', 'MZ2']
+
+        # Assign column names
+        df.columns = cols
+
+        return df
+    except FileNotFoundError:
+        logging.error("The file at %s was not found.", filepath)
+        return None
+    except pd.errors.ParserError as e:
+        logging.error("Parsing error while reading the file: %s", e)
+        return None
+
+
 def sum_dual_force_components(
     force_df: pd.Series, component_1: str ='FZ1', component_2: str ='FZ2'
 ) -> pd.Series:

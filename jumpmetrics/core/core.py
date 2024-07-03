@@ -58,11 +58,13 @@ class ForceTimeCurveCMJTakeoffProcessor:
             quiet_period=0.5,  # 0.5seconds
             duration_check=0.175  # 175 milliseconds of unweighting to avoid false positives
         )
-        self.start_of_propulsive_phase = get_start_of_propulsive_phase_using_displacement(
-            self.displacement_series
-        )
         self.start_of_braking_phase = get_start_of_braking_phase_using_velocity(
-            self.velocity_series
+            velocity_series=self.velocity_series,
+            start_of_unweighting_phase=self.start_of_unweighting_phase
+        )
+        self.start_of_propulsive_phase = get_start_of_propulsive_phase_using_displacement(
+            displacement_series=self.displacement_series,
+            start_of_braking_phase=self.start_of_braking_phase
         )
         self.peak_force_frame = get_peak_force_event(
             force_series=self.force_series,

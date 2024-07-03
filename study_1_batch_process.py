@@ -18,7 +18,6 @@ full_dataset = pd.DataFrame()
 for filename in tqdm(all_filenames):
     filepath = os.path.join(data_dir, filename)
     FILE_PREFIX = '_'.join(filename.split('_')[0:2])
-    # pid = FILE_PREFIX.split('_')[0]
     pid = FILE_PREFIX.split('_', maxsplit=1)[0]
     trial_num = FILE_PREFIX.split('_')[1]
     pid_fig_dir = os.path.join(fig_dir, pid, trial_num)

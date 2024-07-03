@@ -1,4 +1,5 @@
 """Functions for CMJ events"""
+import logging
 import numpy as np
 from scipy.signal import savgol_filter
 from scipy.signal import find_peaks  # Handy function for finding peaks from the SciPy library
@@ -66,20 +67,7 @@ def find_unweighting_start(
 
     return unweighting_start
 
-def get_start_of_concentric_phase(velocity_series) -> int:
-    """Function to find the start of the concentric phase based on the velocity time series
-
-    Args:
-        velocity_series (array): Velocity waveform of the countermovement jump
-
-    Returns:
-        int: Frame corresponding to the start of the concentric phase
-    """
-    min_velocity_index = np.argmin(velocity_series)
-    frame = np.where(velocity_series[min_velocity_index:] > 0)[0][0]
-    return frame + min_velocity_index
-
-def get_start_of_braking_phase_using_velocity(velocity_series) -> int:
+def get_start_of_braking_phase_using_velocity(velocity_series, start_of_unweighting_phase) -> int:
     """Function to find the start of the braking phase using the velocity waveform
 
     Args:
@@ -88,9 +76,13 @@ def get_start_of_braking_phase_using_velocity(velocity_series) -> int:
     Returns:
         int: Frame associated with the start of the braking phase
     """
-    return np.argmin(velocity_series)
+    if start_of_unweighting_phase is not None:
+        return start_of_unweighting_phase + np.argmin(velocity_series[start_of_unweighting_phase:])
+    else:
+        logging.warning('Not using unweighting phase to help find braking phase')
+        return np.argmin(velocity_series)
 
-def get_start_of_propulsive_phase_using_displacement(displacement_series) -> int:
+def get_start_of_propulsive_phase_using_displacement(displacement_series, start_of_braking_phase) -> int:
     """Function to find the start of the propulsive phase using the displacement data
 
     Args:
@@ -99,7 +91,11 @@ def get_start_of_propulsive_phase_using_displacement(displacement_series) -> int
     Returns:
         int: Frame associated with the start of the propulsive phase
     """
-    return np.argmin(displacement_series)
+    if start_of_braking_phase is not None:
+        return start_of_braking_phase + np.argmin(displacement_series[start_of_braking_phase:])
+    else:
+        logging.warning('Not using braking phase to help find propulsive phase')
+        return np.argmin(displacement_series)
 
 def get_peak_force_event(force_series, start_of_propulsive_phase: int) -> int:
     """Find the frame associated with the "peak" of a waveform. Note that this looks for a peak after
