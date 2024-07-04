@@ -162,7 +162,6 @@ for filename in tqdm(all_filenames):
                 CMJ.save_kinematic_dataframe(
                     dataframe_filepath=os.path.join(pid_data_dir, col + '.csv')
                 )
-                # CMJ.force_series.to_csv(os.path.join(pid_data_dir, col + '_force_series.csv'))
                 force_series_df = CMJ.force_series.reset_index()
                 force_series_df.columns = ['frame_number', 'force']  # Rename the columns
                 # Save the DataFrame to a .csv file with specified column names
