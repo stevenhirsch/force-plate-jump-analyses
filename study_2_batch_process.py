@@ -8,7 +8,7 @@ from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import (
     load_raw_force_data_with_no_column_headers, sum_dual_force_components,
     find_first_frame_where_force_exceeds_threshold,
-    find_takeoff_frame, get_n_seconds_before_takeoff
+    find_frame_when_off_plate, get_n_seconds_before_takeoff
 )
 from jumpmetrics.signal_processing.filters import butterworth_filter
 
@@ -74,7 +74,7 @@ for filename in tqdm(all_filenames):
             force_trace=full_summed_force,
             threshold=1000
         )
-        takeoff_frame = find_takeoff_frame(
+        takeoff_frame = find_frame_when_off_plate(
             force_trace=full_summed_force.iloc[frame:],
             sampling_frequency=2000
         )

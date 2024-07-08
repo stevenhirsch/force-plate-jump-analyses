@@ -76,6 +76,15 @@ def load_raw_force_data(filepath: str) -> pd.DataFrame:
 
 
 def load_raw_force_data_with_no_column_headers(filepath: str) -> pd.DataFrame:
+    """Function to load raw force data directly from Netforce
+    that does not contain column headers
+
+    Args:
+        filepath (str): Filepath of the raw force data
+
+    Returns:
+        pd.DataFrame: Dataframe of the force data
+    """
     try:
         # Read the file, skip the first blank line, and use comma as delimiter
         df = pd.read_csv(filepath, delimiter=',', header=None, skiprows=1)
@@ -140,11 +149,12 @@ def find_first_frame_where_force_exceeds_threshold(force_trace: pd.Series, thres
     return first_frame_where_force_exceeds_threshold
 
 
-def find_takeoff_frame(
+def find_frame_when_off_plate(
     force_trace: pd.Series, sampling_frequency: float,
     flight_time_threshold: float = 0.25, force_threshold: float = 10
 ) -> int:
-    """Find the takeoff frame of a vertical jump
+    """Find the next frame when the person is off the force plate.
+    Used to determine takeoff frame of a vertical jump, for example.
 
     Args:
         force_trace (pd.Series): Force trace of the vertical jump
