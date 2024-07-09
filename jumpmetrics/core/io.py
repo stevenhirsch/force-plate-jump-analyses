@@ -201,11 +201,47 @@ def get_n_seconds_before_takeoff(
     # Calculate the number of samples for n seconds
     n_samples = int(n * sampling_frequency)
 
-    # Get the integer location of the takeoff frame
-    takeoff_loc = force_trace.index.get_loc(takeoff_frame)
+    if takeoff_frame is None:
+        # return the force trace data since the person was never detected
+        # to be off the plate
+        return force_trace
+    else:
+        # Get the integer location of the takeoff frame
+        takeoff_loc = force_trace.index.get_loc(takeoff_frame)
 
-    # Calculate the start location
-    start_loc = max(0, takeoff_loc - n_samples)
+        # Calculate the start location
+        start_loc = max(0, takeoff_loc - n_samples)
 
-    # Slice the force_trace
-    return force_trace.iloc[start_loc:takeoff_loc].reset_index(drop=True)
+        # Slice the force_trace
+        return force_trace.iloc[start_loc:takeoff_loc].reset_index(drop=True)
+
+
+def find_landing_frame(force_series, n=30, threshold_value=20):
+    """
+    Find the landing frame in a vertical jump where the force
+    remains above the threshold for a specified number of frames.
+
+    Parameters:
+    force_series (list or array): The series of force values recorded over time.
+    n (int): The number of consecutive frames that must be above the threshold. Defaults to 30.
+    threshold_value (float): The force threshold value. Defaults to 20.
+
+    Returns:
+    int: The index of the landing frame where the force first meets the criteria. Returns -1 if no such frame is found.
+    """
+    total_frames = len(force_series)
+
+    for i in range(total_frames - n + 1):
+        # Check if the next 'n' frames are all above the threshold_value
+        if all(force >= threshold_value for force in force_series[i:i + n]):
+            return i  # Return the first frame where this condition is met
+
+    return -1  # Return -1 if no such frame is found
+
+def get_end_of_landing_phase(velocity_series):
+    """Function to get the end of the landing phase"""
+    velocities_greater_than_zero = np.where(velocity_series >= 0)[0]
+    if len(velocities_greater_than_zero) > 0:
+        return velocities_greater_than_zero[0]
+    else:
+        return -1

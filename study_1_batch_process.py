@@ -8,6 +8,7 @@ from jumpmetrics.core.io import load_cropped_force_data
 from jumpmetrics.signal_processing.filters import butterworth_filter
 
 
+CREATE_PLOTS = False
 main_dir = os.path.join(os.getcwd(), 'analyses', 'study_1')
 data_dir = os.path.join(main_dir, 'raw_data')
 fig_dir = os.path.join(main_dir, 'figures')
@@ -61,103 +62,104 @@ for filename in tqdm(all_filenames):
                 CMJ.compute_jump_metrics()
                 CMJ.create_jump_metrics_dataframe(pid=pid)
                 CMJ.create_kinematic_dataframe()
-                CMJ.plot_waveform(
-                    waveform_type='force',
-                    title=filename + '_' + col,
-                    savefig=True,
-                    figname=os.path.join(pid_fig_dir_cutoff_type, 'force.png')
-                )
-                CMJ.plot_waveform(
-                    waveform_type='acceleration',
-                    title=filename + '_' + col,
-                    savefig=True,
-                    figname=os.path.join(pid_fig_dir_cutoff_type, 'acceleration.png')
-                )
-                CMJ.plot_waveform(
-                    waveform_type='velocity',
-                    title=filename + '_' + col,
-                    savefig=True,
-                    figname=os.path.join(pid_fig_dir_cutoff_type, 'velocity.png')
-                )
-                CMJ.plot_waveform(
-                    waveform_type='displacement',
-                    title=filename + '_' + col,
-                    savefig=True,
-                    figname=os.path.join(pid_fig_dir_cutoff_type, 'displacement.png')
-                )
-                # Bespoke Plots and Dataframes
-                # Force-Velocity
-                plt.plot(
-                    CMJ.velocity_series[CMJ.start_of_unweighting_phase:],
-                    CMJ.force_series.iloc[CMJ.start_of_unweighting_phase:],
-                    color='blue'
-                )
-                plt.xlabel('Velocity (m/s)')
-                plt.ylabel('Force (N)')
-                plt.title(pid)
-                # Highlight the start of the trial
-                plt.plot(
-                    CMJ.velocity_series[CMJ.start_of_unweighting_phase],
-                    CMJ.force_series.iloc[CMJ.start_of_unweighting_phase], 'go',
-                    label='Start of Unweighting Phase'
-                )  # green circle
-                # Highlight the end of the trial
-                plt.plot(
-                    CMJ.velocity_series[-1],
-                    CMJ.force_series.iloc[-1], 'ro',
-                    label='Takeoff'
-                ) # red circle
-                plt.legend()
-                plt.savefig(os.path.join(pid_fig_dir_cutoff_type, 'force_velocity.png'), dpi=300)
-                plt.clf()
-                # Force-Displacement
-                plt.plot(
-                    CMJ.displacement_series[CMJ.start_of_unweighting_phase:],
-                    CMJ.force_series.iloc[CMJ.start_of_unweighting_phase:],
-                    color='blue'
-                )
-                plt.xlabel('Displacement (m)')
-                plt.ylabel('Force (N)')
-                plt.title(pid)
-                # Highlight the start of the trial
-                plt.plot(
-                    CMJ.displacement_series[CMJ.start_of_unweighting_phase],
-                    CMJ.force_series.iloc[CMJ.start_of_unweighting_phase], 'go',
-                    label='Start of Unweighting Phase'
-                )  # green circle
-                # Highlight the end of the trial
-                plt.plot(
-                    CMJ.displacement_series[-1],
-                    CMJ.force_series.iloc[-1], 'ro',
-                    label='Takeoff'
-                ) # red circle
-                plt.legend()
-                plt.savefig(os.path.join(pid_fig_dir_cutoff_type, 'force_displacement.png'), dpi=300)
-                plt.clf()
-                # Velocity-Displacement
-                plt.plot(
-                    CMJ.displacement_series[CMJ.start_of_unweighting_phase:],
-                    CMJ.velocity_series[CMJ.start_of_unweighting_phase:],
-                    color='blue'
-                )
-                plt.xlabel('Displacement (m)')
-                plt.ylabel('Velocity (m/s)')
-                plt.title(pid)
-                # Highlight the start of the trial
-                plt.plot(
-                    CMJ.displacement_series[CMJ.start_of_unweighting_phase],
-                    CMJ.velocity_series[CMJ.start_of_unweighting_phase], 'go',
-                    label='Start of Unweighting Phase'
-                )  # green circle
-                # Highlight the end of the trial
-                plt.plot(
-                    CMJ.displacement_series[-1],
-                    CMJ.velocity_series[-1], 'ro',
-                    label='Takeoff'
-                ) # red circle
-                plt.legend()
-                plt.savefig(os.path.join(pid_fig_dir_cutoff_type, 'velocity_displacement.png'), dpi=300)
-                plt.clf()
+                if CREATE_PLOTS:
+                    CMJ.plot_waveform(
+                        waveform_type='force',
+                        title=filename + '_' + col,
+                        savefig=True,
+                        figname=os.path.join(pid_fig_dir_cutoff_type, 'force.png')
+                    )
+                    CMJ.plot_waveform(
+                        waveform_type='acceleration',
+                        title=filename + '_' + col,
+                        savefig=True,
+                        figname=os.path.join(pid_fig_dir_cutoff_type, 'acceleration.png')
+                    )
+                    CMJ.plot_waveform(
+                        waveform_type='velocity',
+                        title=filename + '_' + col,
+                        savefig=True,
+                        figname=os.path.join(pid_fig_dir_cutoff_type, 'velocity.png')
+                    )
+                    CMJ.plot_waveform(
+                        waveform_type='displacement',
+                        title=filename + '_' + col,
+                        savefig=True,
+                        figname=os.path.join(pid_fig_dir_cutoff_type, 'displacement.png')
+                    )
+                    # Bespoke Plots and Dataframes
+                    # Force-Velocity
+                    plt.plot(
+                        CMJ.velocity_series[CMJ.start_of_unweighting_phase:],
+                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase:],
+                        color='blue'
+                    )
+                    plt.xlabel('Velocity (m/s)')
+                    plt.ylabel('Force (N)')
+                    plt.title(pid)
+                    # Highlight the start of the trial
+                    plt.plot(
+                        CMJ.velocity_series[CMJ.start_of_unweighting_phase],
+                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase], 'go',
+                        label='Start of Unweighting Phase'
+                    )  # green circle
+                    # Highlight the end of the trial
+                    plt.plot(
+                        CMJ.velocity_series[-1],
+                        CMJ.force_series.iloc[-1], 'ro',
+                        label='Takeoff'
+                    ) # red circle
+                    plt.legend()
+                    plt.savefig(os.path.join(pid_fig_dir_cutoff_type, 'force_velocity.png'), dpi=300)
+                    plt.clf()
+                    # Force-Displacement
+                    plt.plot(
+                        CMJ.displacement_series[CMJ.start_of_unweighting_phase:],
+                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase:],
+                        color='blue'
+                    )
+                    plt.xlabel('Displacement (m)')
+                    plt.ylabel('Force (N)')
+                    plt.title(pid)
+                    # Highlight the start of the trial
+                    plt.plot(
+                        CMJ.displacement_series[CMJ.start_of_unweighting_phase],
+                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase], 'go',
+                        label='Start of Unweighting Phase'
+                    )  # green circle
+                    # Highlight the end of the trial
+                    plt.plot(
+                        CMJ.displacement_series[-1],
+                        CMJ.force_series.iloc[-1], 'ro',
+                        label='Takeoff'
+                    ) # red circle
+                    plt.legend()
+                    plt.savefig(os.path.join(pid_fig_dir_cutoff_type, 'force_displacement.png'), dpi=300)
+                    plt.clf()
+                    # Velocity-Displacement
+                    plt.plot(
+                        CMJ.displacement_series[CMJ.start_of_unweighting_phase:],
+                        CMJ.velocity_series[CMJ.start_of_unweighting_phase:],
+                        color='blue'
+                    )
+                    plt.xlabel('Displacement (m)')
+                    plt.ylabel('Velocity (m/s)')
+                    plt.title(pid)
+                    # Highlight the start of the trial
+                    plt.plot(
+                        CMJ.displacement_series[CMJ.start_of_unweighting_phase],
+                        CMJ.velocity_series[CMJ.start_of_unweighting_phase], 'go',
+                        label='Start of Unweighting Phase'
+                    )  # green circle
+                    # Highlight the end of the trial
+                    plt.plot(
+                        CMJ.displacement_series[-1],
+                        CMJ.velocity_series[-1], 'ro',
+                        label='Takeoff'
+                    ) # red circle
+                    plt.legend()
+                    plt.savefig(os.path.join(pid_fig_dir_cutoff_type, 'velocity_displacement.png'), dpi=300)
+                    plt.clf()
 
                 CMJ.save_kinematic_dataframe(
                     dataframe_filepath=os.path.join(pid_data_dir, col + '.csv')

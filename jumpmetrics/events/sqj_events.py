@@ -1,0 +1,156 @@
+"""Functions for SQJ events"""
+import logging
+import numpy as np
+from scipy.signal import savgol_filter
+from scipy.signal import find_peaks  # Handy function for finding peaks from the SciPy library
+
+def get_start_of_propulsive_phase(
+    force_data, sample_rate: float, quiet_period: int = 1,
+    threshold_factor: float = 5, window_size: float = 0.2, duration_check: float = 0.1
+) -> int:
+    """Function to find the start of the unweighting phase
+
+    Args:
+        force_data (array): Force series
+
+        sample_rate (float): Sampling rate of the force plate
+
+        quiet_period (int, optional): This is the duration (in seconds) at the beginning of the 
+        data that you consider to be the "quiet stance" period. During this time, the participant should
+        be standing relatively still. The default is set to 1 second, but you might adjust this based on
+        your experimental protocol. Defaults to 1 second.
+
+        threshold_factor (float, optional): This is the number of standard deviations below the mean force
+        that will be used to determine the start of unweighting. The default is 5, which means the
+        algorithm will look for force values that drop below (mean force - 5 * standard deviation). You
+        might adjust this if you find the algorithm is triggering too early or too late. Defaults to 5
+        standard deviations.
+
+        window_size (float, optional): This is the size of the window (in seconds) used for
+        the Savitzky-Golay filter, which smooths the data. The default is 0.2 seconds. A larger
+        window will result in more smoothing but might also blur important features of the force curve.
+        Defaults to 0.2.
+
+        duration_check (float, optional): Number of seconds to check if the person is propelling.
+        Used to ignore false positives. Defaults to 0.1 seconds.
+
+    Returns:
+        int: Frame number corresponding to the start of the unweighting phase
+    """
+    # Convert window size from seconds to samples
+    window_samples = int(window_size * sample_rate)
+
+    # Smooth the force data using Savitzky-Golay filter
+    smoothed_force = savgol_filter(force_data, window_samples, 3)
+
+    # Calculate mean and standard deviation of the quiet period
+    quiet_samples = int(quiet_period * sample_rate)
+    quiet_force = force_data[:quiet_samples]
+    mean_force = np.mean(quiet_force)
+    std_force = np.std(quiet_force)
+
+    # Calculate the threshold
+    threshold = mean_force + threshold_factor * std_force
+
+    # Convert duration_check from seconds to samples
+    duration_samples = int(duration_check * sample_rate)
+
+    # Find the first point where smoothed force drops below threshold
+    unweighting_start = None
+    for i in range(quiet_samples, len(smoothed_force) - duration_samples):
+        if smoothed_force[i] > threshold:
+            # Check if force stays above threshold for the specified duration
+            if np.all(smoothed_force[i:i+duration_samples] > threshold):
+                unweighting_start = i
+                break
+    if unweighting_start is None:
+        logging.warning(' Start of propulsive phase not found')
+    return unweighting_start
+
+
+def get_sqj_peak_force_event(force_series, start_of_propulsive_phase: int) -> int:
+    """Find the frame associated with the "peak" of a waveform. Note that this looks for a peak after
+    the start of the propulsive phase, which requires a certain prominence to be detected. Please see
+    scipy's find_peaks() documentation for more information about prominence.
+
+    Args:
+        force_series (array): Force waveform
+        start_of_propulsive_phase (int): Frame associated with the start of the propulsive phase
+
+    Returns:
+        int: Frame corresponding to the peak force
+    """
+    peaks, _ = find_peaks(
+        force_series.iloc[start_of_propulsive_phase:], prominence=50
+    )
+    if len(peaks) < 1 or start_of_propulsive_phase is None:
+        peak_force_frame = force_series.iloc[start_of_propulsive_phase:].idxmax()
+    else:
+        peak_force_frame = peaks[0] + start_of_propulsive_phase
+    return peak_force_frame
+
+
+def find_potential_unweighting(
+    force_data, sample_rate: float, quiet_period: int = 1,
+    threshold_factor: float = 5, window_size: float = 0.2, duration_check: float = 0.1
+) -> int:
+    """Function to find the start of the unweighting phase
+
+    Args:
+        force_data (array): Force series
+
+        sample_rate (float): Sampling rate of the force plate
+
+        quiet_period (int, optional): This is the duration (in seconds) at the beginning of the 
+        data that you consider to be the "quiet stance" period. During this time, the participant should
+        be standing relatively still. The default is set to 1 second, but you might adjust this based on
+        your experimental protocol. Defaults to 1 second.
+
+        threshold_factor (float, optional): This is the number of standard deviations below the mean force
+        that will be used to determine the start of unweighting. The default is 5, which means the
+        algorithm will look for force values that drop below (mean force - 5 * standard deviation). You
+        might adjust this if you find the algorithm is triggering too early or too late. Defaults to 5
+        standard deviations.
+
+        window_size (float, optional): This is the size of the window (in seconds) used for
+        the Savitzky-Golay filter, which smooths the data. The default is 0.2 seconds. A larger
+        window will result in more smoothing but might also blur important features of the force curve.
+        Defaults to 0.2.
+
+        duration_check (float, optional): Number of seconds to check if the person is unweighting.
+        Used to ignore false positives. Defaults to 0.1 seconds.
+
+    Returns:
+        int: Frame number corresponding to the start of the unweighting phase
+    """
+    # Convert window size from seconds to samples
+    window_samples = int(window_size * sample_rate)
+
+    # Smooth the force data using Savitzky-Golay filter
+    smoothed_force = savgol_filter(force_data, window_samples, 3)
+
+    # Calculate mean and standard deviation of the quiet period
+    quiet_samples = int(quiet_period * sample_rate)
+    quiet_force = force_data[:quiet_samples]
+    mean_force = np.mean(quiet_force)
+    std_force = np.std(quiet_force)
+
+    # Calculate the threshold
+    threshold = mean_force - threshold_factor * std_force
+
+    # Convert duration_check from seconds to samples
+    duration_samples = int(duration_check * sample_rate)
+
+    # Find the first point where smoothed force drops below threshold
+    unweighting_start = None
+    for i in range(quiet_samples, len(smoothed_force) - duration_samples):
+        if smoothed_force[i] < threshold:
+            # Check if force stays below threshold for the specified duration
+            if np.all(smoothed_force[i:i+duration_samples] < threshold):
+                unweighting_start = i
+                break
+    if unweighting_start is not None:
+        logging.warning(' Unweighting phase detected during squat jump.')
+        return unweighting_start
+    else:
+        return -1

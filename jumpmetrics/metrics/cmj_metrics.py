@@ -39,6 +39,13 @@ def compute_rfd(
     if window_end <= window_start:
         logging.warning("window_end is before or equal to window_start, so RFD will be invalid. Returning np.nan")
         return np.nan
+    if window_end is None:
+        logging.warning('End of window for RFD not found, returning np.nan')
+        return np.nan
+    if window_start is None:
+        logging.warning('Start of window for RFD not found, returning np.nan')
+        return np.nan
+
     valid_methods = ['average', 'instantaneous', 'peak']
     if method == 'average':
         force_at_start = force_trace[window_start]
@@ -115,6 +122,12 @@ def compute_average_force_between_events(force_trace, window_start: int, window_
             """window_end occurred before or at the same time as window_start,
             so average force between events is invalid. Returning np.nan"""
         )
+        return np.nan
+    if window_start is None:
+        logging.warning("window_start is -1, returning np.nan")
+        return np.nan
+    if window_end is None:
+        logging.warning('window_end is -1, returning np.nan')
         return np.nan
     average_force = force_trace.iloc[window_start:window_end].mean()
     return average_force
