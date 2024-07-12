@@ -110,10 +110,10 @@ def get_peak_force_event(force_series, start_of_propulsive_phase: int) -> int:
         int: Frame corresponding to the peak force
     """
     peaks, _ = find_peaks(
-        force_series.iloc[start_of_propulsive_phase:], prominence=50
+        force_series[start_of_propulsive_phase:], prominence=50
     )
     if len(peaks) == 0:
-        peak_force_frame = force_series.iloc[start_of_propulsive_phase:].idxmax()
+        peak_force_frame = np.argmax(force_series[start_of_propulsive_phase:])
     else:
         peak_force_frame = peaks[0] + start_of_propulsive_phase
     return peak_force_frame

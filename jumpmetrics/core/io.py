@@ -236,6 +236,7 @@ def find_landing_frame(force_series, n=30, threshold_value=20):
         if all(force >= threshold_value for force in force_series[i:i + n]):
             return i  # Return the first frame where this condition is met
 
+    logging.warning(' No landing frame found.')
     return -1  # Return -1 if no such frame is found
 
 def get_end_of_landing_phase(velocity_series):

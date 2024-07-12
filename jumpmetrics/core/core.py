@@ -10,7 +10,7 @@ from jumpmetrics.events.cmj_events import (
     find_unweighting_start, get_start_of_propulsive_phase_using_displacement,
     get_start_of_braking_phase_using_velocity, get_peak_force_event
 )
-from jumpmetrics.metrics.cmj_metrics import (
+from jumpmetrics.metrics.metrics import (
     compute_rfd, get_bodyweight, compute_average_force_between_events,
     compute_jump_height_from_net_vertical_impulse, compute_jump_height_from_takeoff_velocity
 )
@@ -26,10 +26,11 @@ class ForceTimeCurveCMJTakeoffProcessor:
     """
     def __init__(self, force_series, sampling_frequency=2000):
         self.force_series = force_series
-        if not isinstance(self.force_series, pd.Series):
-            self.force_series = pd.Series(self.force_series)
+        if not isinstance(self.force_series, np.ndarray):
+            self.force_series = np.array(self.force_series)
         self.body_weight = get_bodyweight(force_series = self.force_series)
         self.body_mass_kg = self.body_weight / 9.81
+        self.sampling_frequency = sampling_frequency
         # relevant kinematic series
         self.acceleration_series = (self.force_series - self.body_weight) / self.body_mass_kg
         self.velocity_series = compute_integral_of_signal(
@@ -40,9 +41,12 @@ class ForceTimeCurveCMJTakeoffProcessor:
             self.velocity_series,
             sampling_frequency=sampling_frequency
         )
-        self.time = pd.Series((self.force_series.index + 1) / sampling_frequency)
+        self.time = np.arange(
+            start = 0,
+            stop = len(self.force_series) / self.sampling_frequency,
+            step = 1/self.sampling_frequency
+        )
         # extra variables to be used in other functions
-        self.sampling_frequency = sampling_frequency
         self.force_series_minus_bodyweight = self.force_series - self.body_weight
         # defining empty dataframes
         self.jump_metrics = {}
@@ -83,155 +87,154 @@ class ForceTimeCurveCMJTakeoffProcessor:
             ValueError: If any events are None, a ValueError is raised since metrics cannot
             be defined without events
         """
-        events_list = [
-            self.start_of_unweighting_phase,
-            self.start_of_braking_phase,
-            self.start_of_propulsive_phase,
-            self.peak_force_frame
-        ]
-        if any(value is None for value in events_list):
-            raise ValueError(f"The following events need to be defined first: {events_list}")
+        self.jump_metrics['propulsive_peakforce_rfd_slope_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency=self.sampling_frequency,
+            method='average'
+        )
+        self.jump_metrics['propulsive_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency=self.sampling_frequency,
+            method='instantaneous'
+        )
+        self.jump_metrics['propulsive_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency=self.sampling_frequency,
+            method='peak'
+        )
+        self.jump_metrics['braking_peakforce_rfd_slope_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_braking_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency=self.sampling_frequency,
+            method='average'
+        )
+        self.jump_metrics['braking_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_braking_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency=self.sampling_frequency,
+            method='instantaneous'
+        )
+        self.jump_metrics['braking_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_braking_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency=self.sampling_frequency,
+            method='peak'
+        )
+        self.jump_metrics['braking_propulsive_rfd_slope_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_braking_phase,
+            window_end = self.start_of_propulsive_phase,
+            sampling_frequency=self.sampling_frequency,
+            method='average'
+        )
+        self.jump_metrics['braking_propulsive_rfd_instantaneous_average_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_braking_phase,
+            window_end = self.start_of_propulsive_phase,
+            sampling_frequency=self.sampling_frequency,
+            method='instantaneous'
+        )
+        self.jump_metrics['braking_propulsive_rfd_instantaneous_peak_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_braking_phase,
+            window_end = self.start_of_propulsive_phase,
+            sampling_frequency=self.sampling_frequency,
+            method='peak'
+        )
+        if self.peak_force_frame > self.start_of_braking_phase:
+            self.jump_metrics['braking_net_vertical_impulse'] = integrate_area(
+                time=self.time[self.start_of_braking_phase:self.peak_force_frame],
+                signal=self.force_series_minus_bodyweight[self.start_of_braking_phase:self.peak_force_frame]
+            )
         else:
-            self.jump_metrics['propulsive_peakforce_rfd_slope_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_propulsive_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='average'
+            logging.warning(
+                """Peak force occurred before or at the start of the braking phase,
+                so impulse between events is invalid"""
             )
-            self.jump_metrics['propulsive_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_propulsive_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='instantaneous'
+            self.jump_metrics['braking_net_vertical_impulse'] = np.nan
+        if self.peak_force_frame > self.start_of_propulsive_phase:
+            self.jump_metrics['propulsive_net_vertical_impulse'] = integrate_area(
+                time=self.time[self.start_of_propulsive_phase:self.peak_force_frame],
+                signal=self.force_series_minus_bodyweight[self.start_of_propulsive_phase:self.peak_force_frame]
             )
-            self.jump_metrics['propulsive_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_propulsive_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='peak'
+        else:
+            logging.warning(
+                """Peak force occurred before or at the start of the propulsive phase,
+                so impulse between events is invalid"""
             )
-            self.jump_metrics['braking_peakforce_rfd_slope_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_braking_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='average'
+            self.jump_metrics['propulsive_net_vertical_impulse'] = np.nan
+        if self.start_of_propulsive_phase > self.start_of_braking_phase:
+            self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = integrate_area(
+                time=self.time[self.start_of_braking_phase:self.start_of_propulsive_phase],
+                signal=self.force_series_minus_bodyweight[
+                    self.start_of_braking_phase:self.start_of_propulsive_phase
+                ]
             )
-            self.jump_metrics['braking_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_braking_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='instantaneous'
+        else:
+            logging.warning(
+                """Braking phase occured before or at the start of the propulsive phase,
+                so impulse between events is invalid"""
             )
-            self.jump_metrics['braking_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_braking_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='peak'
-            )
-            self.jump_metrics['braking_propulsive_rfd_slope_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_braking_phase,
-                window_end = self.start_of_propulsive_phase,
-                sampling_frequency=self.sampling_frequency,
-                method='average'
-            )
-            self.jump_metrics['braking_propulsive_rfd_instantaneous_average_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_braking_phase,
-                window_end = self.start_of_propulsive_phase,
-                sampling_frequency=self.sampling_frequency,
-                method='instantaneous'
-            )
-            self.jump_metrics['braking_propulsive_rfd_instantaneous_peak_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_braking_phase,
-                window_end = self.start_of_propulsive_phase,
-                sampling_frequency=self.sampling_frequency,
-                method='peak'
-            )
-            if self.peak_force_frame > self.start_of_braking_phase:
-                self.jump_metrics['braking_net_vertical_impulse'] = integrate_area(
-                    time=self.time.iloc[self.start_of_braking_phase:self.peak_force_frame],
-                    signal=self.force_series_minus_bodyweight.iloc[self.start_of_braking_phase:self.peak_force_frame]
-                )
-            else:
-                logging.warning(
-                    """Peak force occurred before or at the start of the braking phase,
-                    so impulse between events is invalid"""
-                )
-                self.jump_metrics['braking_net_vertical_impulse'] = np.nan
-            if self.peak_force_frame > self.start_of_propulsive_phase:
-                self.jump_metrics['propulsive_net_vertical_impulse'] = integrate_area(
-                    time=self.time.iloc[self.start_of_propulsive_phase:self.peak_force_frame],
-                    signal=self.force_series_minus_bodyweight.iloc[self.start_of_propulsive_phase:self.peak_force_frame]
-                )
-            else:
-                logging.warning(
-                    """Peak force occurred before or at the start of the propulsive phase,
-                    so impulse between events is invalid"""
-                )
-                self.jump_metrics['propulsive_net_vertical_impulse'] = np.nan
-            if self.start_of_propulsive_phase > self.start_of_braking_phase:
-                self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = integrate_area(
-                    time=self.time.iloc[self.start_of_braking_phase:self.start_of_propulsive_phase],
-                    signal=self.force_series_minus_bodyweight.iloc[
-                        self.start_of_braking_phase:self.start_of_propulsive_phase
-                    ]
-                )
-            else:
-                logging.warning(
-                    """Braking phase occured before or at the start of the propulsive phase,
-                    so impulse between events is invalid"""
-                )
-                self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = np.nan
+            self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = np.nan
 
-            self.jump_metrics['total_net_vertical_impulse'] = integrate_area(
-                time=self.time,
-                signal=self.force_series_minus_bodyweight
-            )
-            self.jump_metrics['peak_force'] = self.force_series.iloc[self.peak_force_frame]
-            self.jump_metrics['maximum_force'] = np.nanmax(self.force_series)
-            self.jump_metrics['average_force_of_braking_phase'] = compute_average_force_between_events(
-                force_trace=self.force_series,
-                window_start=self.start_of_braking_phase,
-                window_end=self.start_of_propulsive_phase
-            )
-            self.jump_metrics['average_force_of_propulsive_phase'] = compute_average_force_between_events(
-                force_trace=self.force_series,
-                window_start=self.start_of_propulsive_phase,
-                window_end=-1  # take the last frame
-            )
-            self.jump_metrics['takeoff_velocity'] = self.velocity_series[-1]
-            self.jump_metrics['jump_height_takeoff_velocity'] = compute_jump_height_from_takeoff_velocity(
-                self.jump_metrics['takeoff_velocity'].item()
-            )
-            self.jump_metrics['jump_height_net_vertical_impulse'] = compute_jump_height_from_net_vertical_impulse(
-                net_vertical_impulse=self.jump_metrics['total_net_vertical_impulse'].item(),
-                body_mass_kg=self.body_mass_kg
-            )
+        self.jump_metrics['total_net_vertical_impulse'] = integrate_area(
+            time=self.time,
+            signal=self.force_series_minus_bodyweight
+        )
+        self.jump_metrics['peak_force'] = self.force_series[self.peak_force_frame]
+        self.jump_metrics['maximum_force'] = np.nanmax(self.force_series)
+        self.jump_metrics['average_force_of_braking_phase'] = compute_average_force_between_events(
+            force_trace=self.force_series,
+            window_start=self.start_of_braking_phase,
+            window_end=self.start_of_propulsive_phase
+        )
+        self.jump_metrics['average_force_of_propulsive_phase'] = compute_average_force_between_events(
+            force_trace=self.force_series,
+            window_start=self.start_of_propulsive_phase,
+            window_end=-1  # take the last frame
+        )
+        self.jump_metrics['takeoff_velocity'] = self.velocity_series[-1]
+        self.jump_metrics['jump_height_takeoff_velocity'] = compute_jump_height_from_takeoff_velocity(
+            self.jump_metrics['takeoff_velocity'].item()
+        )
+        self.jump_metrics['jump_height_net_vertical_impulse'] = compute_jump_height_from_net_vertical_impulse(
+            net_vertical_impulse=self.jump_metrics['total_net_vertical_impulse'].item(),
+            body_mass_kg=self.body_mass_kg
+        )
+        if self.start_of_unweighting_phase is not None:
             self.jump_metrics['movement_time'] = (
-                self.force_series.index[-1] - self.start_of_unweighting_phase
+                len(self.force_series) - self.start_of_unweighting_phase
             ) / self.sampling_frequency
             self.jump_metrics['unweighting_time'] = (
                 self.start_of_braking_phase - self.start_of_unweighting_phase
             ) / self.sampling_frequency
+        else:
+            self.jump_metrics['movement_time'] = np.nan
+            self.jump_metrics['unweighting_time'] = np.nan
+        if self.start_of_braking_phase is not None:
             self.jump_metrics['braking_time'] = (
                 self.start_of_propulsive_phase - self.start_of_braking_phase
             ) / self.sampling_frequency
             self.jump_metrics['propulsive_time'] = (
-                self.force_series.index[-1] - self.start_of_propulsive_phase
+                len(self.force_series) - self.start_of_propulsive_phase
             ) / self.sampling_frequency
-            self.jump_metrics['lowering_displacement'] = np.min(self.displacement_series)
-            self.jump_metrics['frame_start_of_unweighting_phase'] = self.start_of_unweighting_phase
-            self.jump_metrics['frame_start_of_breaking_phase'] = self.start_of_braking_phase
-            self.jump_metrics['frame_start_of_propulsive_phase'] = self.start_of_propulsive_phase
-            self.jump_metrics['frame_peak_force'] = self.peak_force_frame
+        else:
+            self.jump_metrics['braking_time'] = np.nan
+            self.jump_metrics['propulsive_time'] = np.nan
+        self.jump_metrics['lowering_displacement'] = np.min(self.displacement_series)
+        self.jump_metrics['frame_start_of_unweighting_phase'] = self.start_of_unweighting_phase
+        self.jump_metrics['frame_start_of_breaking_phase'] = self.start_of_braking_phase
+        self.jump_metrics['frame_start_of_propulsive_phase'] = self.start_of_propulsive_phase
+        self.jump_metrics['frame_peak_force'] = self.peak_force_frame
 
     def create_jump_metrics_dataframe(self, pid: str):
         """Create a jump metrics dataframe
@@ -363,10 +366,11 @@ class ForceTimeCurveSQJTakeoffProcessor:
     """
     def __init__(self, force_series, sampling_frequency=2000):
         self.force_series = force_series
-        if not isinstance(self.force_series, pd.Series):
-            self.force_series = pd.Series(self.force_series)
+        if not isinstance(self.force_series, np.ndarray):
+            self.force_series = np.array(self.force_series)
         self.body_weight = get_bodyweight(force_series = self.force_series)
         self.body_mass_kg = self.body_weight / 9.81
+        self.sampling_frequency = sampling_frequency
         # relevant kinematic series
         self.acceleration_series = (self.force_series - self.body_weight) / self.body_mass_kg
         self.velocity_series = compute_integral_of_signal(
@@ -377,9 +381,12 @@ class ForceTimeCurveSQJTakeoffProcessor:
             self.velocity_series,
             sampling_frequency=sampling_frequency
         )
-        self.time = pd.Series((self.force_series.index + 1) / sampling_frequency)
+        self.time = np.arange(
+            start = 0,
+            stop = len(self.force_series) / self.sampling_frequency,
+            step = 1/self.sampling_frequency
+        )
         # extra variables to be used in other functions
-        self.sampling_frequency = sampling_frequency
         self.force_series_minus_bodyweight = self.force_series - self.body_weight
         # defining empty dataframes
         self.jump_metrics = {}
@@ -419,62 +426,61 @@ class ForceTimeCurveSQJTakeoffProcessor:
             ValueError: If any events are None, a ValueError is raised since metrics cannot
             be defined without events
         """
-        events_list = [
-            self.start_of_propulsive_phase,
-            self.peak_force_frame
-        ]
-        if any(value is None for value in events_list):
-            raise ValueError(f"The following events need to be defined first: {events_list}")
-        else:
-            self.jump_metrics['propulsive_peakforce_rfd_slope_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_propulsive_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='average'
-            )
-            self.jump_metrics['propulsive_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_propulsive_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='instantaneous'
-            )
-            self.jump_metrics['propulsive_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
-                force_trace = self.force_series,
-                window_start = self.start_of_propulsive_phase,
-                window_end = self.peak_force_frame,
-                sampling_frequency=self.sampling_frequency,
-                method='peak'
-            )
-            self.jump_metrics['total_net_vertical_impulse'] = integrate_area(
-                time=self.time,
-                signal=self.force_series_minus_bodyweight
-            )
-            self.jump_metrics['peak_force'] = self.force_series.iloc[self.peak_force_frame]
-            self.jump_metrics['maximum_force'] = np.nanmax(self.force_series)
-            self.jump_metrics['average_force_of_propulsive_phase'] = compute_average_force_between_events(
-                force_trace=self.force_series,
-                window_start=self.start_of_propulsive_phase,
-                window_end=-1  # take the last frame
-            )
-            self.jump_metrics['takeoff_velocity'] = self.velocity_series[-1]
-            self.jump_metrics['jump_height_takeoff_velocity'] = compute_jump_height_from_takeoff_velocity(
-                self.jump_metrics['takeoff_velocity'].item()
-            )
-            self.jump_metrics['jump_height_net_vertical_impulse'] = compute_jump_height_from_net_vertical_impulse(
-                net_vertical_impulse=self.jump_metrics['total_net_vertical_impulse'].item(),
-                body_mass_kg=self.body_mass_kg
-            )
+        self.jump_metrics['propulsive_peakforce_rfd_slope_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency = self.sampling_frequency,
+            method = 'average'
+        )
+        self.jump_metrics['propulsive_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency = self.sampling_frequency,
+            method = 'instantaneous'
+        )
+        self.jump_metrics['propulsive_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = self.peak_force_frame,
+            sampling_frequency = self.sampling_frequency,
+            method = 'peak'
+        )
+        self.jump_metrics['total_net_vertical_impulse'] = integrate_area(
+            time=self.time,
+            signal=self.force_series_minus_bodyweight
+        )
+        self.jump_metrics['peak_force'] = self.force_series[self.peak_force_frame]
+        self.jump_metrics['maximum_force'] = np.nanmax(self.force_series)
+        self.jump_metrics['average_force_of_propulsive_phase'] = compute_average_force_between_events(
+            force_trace = self.force_series,
+            window_start = self.start_of_propulsive_phase,
+            window_end = -1  # take the last frame
+        )
+        self.jump_metrics['takeoff_velocity'] = self.velocity_series[-1]
+        self.jump_metrics['jump_height_takeoff_velocity'] = compute_jump_height_from_takeoff_velocity(
+            self.jump_metrics['takeoff_velocity'].item()
+        )
+        self.jump_metrics['jump_height_net_vertical_impulse'] = compute_jump_height_from_net_vertical_impulse(
+            net_vertical_impulse=self.jump_metrics['total_net_vertical_impulse'].item(),
+            body_mass_kg=self.body_mass_kg
+        )
+        if self.start_of_propulsive_phase is not None:
             self.jump_metrics['movement_time'] = (
-                self.force_series.index[-1] - self.start_of_propulsive_phase
+                # self.force_series.index[-1] - self.start_of_propulsive_phase
+                len(self.force_series) - self.start_of_propulsive_phase
             ) / self.sampling_frequency
             self.jump_metrics['propulsive_time'] = (
-                self.force_series.index[-1] - self.start_of_propulsive_phase
+                # self.force_series.index[-1] - self.start_of_propulsive_phase
+                len(self.force_series) - self.start_of_propulsive_phase
             ) / self.sampling_frequency
-            self.jump_metrics['frame_start_of_propulsive_phase'] = self.start_of_propulsive_phase
-            self.jump_metrics['frame_peak_force'] = self.peak_force_frame
-            self.jump_metrics['frame_of_potential_unweighting_start'] = self.potential_unweighting_start
+        else:
+            self.jump_metrics['movement_time'] = np.nan
+            self.jump_metrics['propulsive_time'] = np.nan
+        self.jump_metrics['frame_start_of_propulsive_phase'] = self.start_of_propulsive_phase
+        self.jump_metrics['frame_peak_force'] = self.peak_force_frame
+        self.jump_metrics['frame_of_potential_unweighting_start'] = self.potential_unweighting_start
 
     def create_jump_metrics_dataframe(self, pid: str):
         """Create a jump metrics dataframe
@@ -593,6 +599,8 @@ class ForceTimeCurveJumpLandingProcessor:
     """Class for computing events and metrics for jump landings"""
     def __init__(self, landing_force_trace, sampling_frequency, body_weight, takeoff_velocity):
         self.landing_force_trace = landing_force_trace
+        if not isinstance(self.landing_force_trace, np.ndarray):
+            self.landing_force_trace = np.array(self.landing_force_trace)
         self.body_weight = body_weight
         self.sampling_frequency = sampling_frequency
         self.takeoff_velocity = takeoff_velocity
@@ -637,7 +645,7 @@ class ForceTimeCurveJumpLandingProcessor:
         if any(value is None for value in events_list):
             raise ValueError(f"The following events need to be defined first: {events_list}")
         else:
-            self.landing_metrics['peak_landing_force'] = [
+            self.landing_metrics['max_landing_force'] = [
                 self.landing_force_trace[
                     self.peak_force_frame
                 ]
@@ -651,7 +659,28 @@ class ForceTimeCurveJumpLandingProcessor:
             self.landing_metrics['landing_displacement'] = [
                 np.min(self.displacement[:self.end_of_landing_phase])
             ]
-            self.landing_metrics['peak_force_frame'] = [
+            self.landing_metrics['landing_maxforce_rfd_slope_between_events'] = compute_rfd(
+                force_trace = self.landing_force_trace,
+                window_start = 0,  # first frame of landing
+                window_end = self.peak_force_frame,
+                sampling_frequency = self.sampling_frequency,
+                method = 'average'
+            )
+            self.landing_metrics['landingmaxforce_rfd_instantaneous_average_between_events'] = compute_rfd(
+                force_trace = self.landing_force_trace,
+                window_start = 0,  # first frame of landing
+                window_end = self.peak_force_frame,
+                sampling_frequency = self.sampling_frequency,
+                method = 'instantaneous'
+            )
+            self.landing_metrics['landing_maxforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
+                force_trace = self.landing_force_trace,
+                window_start = 0,  # first frame of landing
+                window_end = self.peak_force_frame,
+                sampling_frequency=self.sampling_frequency,
+                method = 'peak'
+            )
+            self.landing_metrics['max_force_frame_landing'] = [
                 self.peak_force_frame
             ]
 
