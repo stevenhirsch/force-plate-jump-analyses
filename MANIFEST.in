@@ -1,5 +1,0 @@
-include README.md
-include LICENSE
-include env.yml
-recursive-include JumpMetrics *.py
-# recursive-include tests *.py

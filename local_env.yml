@@ -1,6 +1,13 @@
 channels:
   - defaults
-dependancies:
+dependencies:
   - ipython=8.12.*
   - jupyter=1.0.*
   - jupyterlab=3.6.*
+  - tqdm
+  - pip
+  - build
+  - pip:
+    - pytest
+    - flake8
+    - build

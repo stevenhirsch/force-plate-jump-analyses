@@ -1,14 +1,15 @@
 # force-plate-jump-analyses
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 
 ## Overview
-**force-plate-jump-analyses** is a set of functions and tools for analyzing (countermovement) jump data collected using force plates. The package provides comprehensive analyses to help in understanding various aspects of jump performance and mechanics and helps with batch processing jump trials.
+
+The `jumpmetrics` package is a completely free, open-source toolkit for analyzing force plate data during countermovement and squat (pause) jumps. The package provides comprehensive analyses to help in understanding various aspects of jump performance and mechanics and helps with batch processing jump trials.
 
 ## Features
-- Batch processing of CMJ data from `.txt` files exported from force plates.
-- Signal processing and filtering
+- Batch processing of countermovement jump and squat jump data from `.txt` files exported from force plates (e.g., NetForce).
+- Signal processing and filtering.
 - Automated data cropping, events, metrics, and visualization tools.
 - Easy-to-use functions for detailed jump performance insights.
 - Extensible framework for additional analysis and custom data processing.
@@ -16,7 +17,7 @@
 ## Getting Set Up to Run the Code
 ### Prerequisites
 - **Anaconda** or **Miniconda**: Install [Anaconda](https://anaconda.org) or [Miniconda](https://docs.anaconda.com/miniconda/) on your machine.
-- **Python**: Ensure Python 3.8 or higher is installed.
+- **Python**: Ensure Python 3.10 or higher is installed.
 
 ### Installation
 1. Clone the repository to your local machine:
@@ -41,7 +42,7 @@
     ```
 
 ## Building the Package
-If you want to build the package for installation, you can do so using `python -m build`. Follow these steps to create a package:
+If you want to build the package for installation, you can do so using `python -m build` after cloning the repository. Follow these steps to create a package:
 
 1. **Install `build` package**:
     ```
@@ -78,7 +79,7 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 -->
 
 ## Batch Processing Data
-Examples of how to batch process data are found in `study_1_batch_process.py` and `study_2_batch_process.py`. You can run eithet file with a command such as:
+Examples of how to batch process data are found in `study_1_batch_process.py`,  `study_2_batch_process.py`, and `study_3_batch_process.py`. You can run either file with a command such as:
 ```
 python study_1_batch_process.py
 ```

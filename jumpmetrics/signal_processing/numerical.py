@@ -1,6 +1,6 @@
 """Functions for numerical operations"""
 import numpy as np
-from scipy.integrate import simps  # Simpson's method for computing integral
+from scipy.integrate import simpson  # Simpson's method for computing integral
 import pandas as pd
 
 
@@ -27,7 +27,7 @@ def integrate_area(time, signal, method='trapezoidal') -> np.ndarray:
         area = np.trapz(signal, time)
     elif method == 'simpsons':
         # Compute the area using Simpson's rule
-        area = simps(signal, time)
+        area = simpson(y=signal, x=time)
     else:
         raise ValueError("Method must be 'trapezoidal' or 'simpsons'.")
 
