@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: [3.11]
 
     steps:
     - uses: actions/checkout@v3
@@ -50,9 +50,9 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Explictly install python 3.9 with Conda
+    - name: Explictly install python 3.11 with Conda
       run: |
-        conda install python=3.9
+        conda install python=3.11
     - name: Install dependencies
       run: |
         conda env update --file env.yml --name base
