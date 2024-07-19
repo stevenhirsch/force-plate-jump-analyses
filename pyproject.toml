@@ -29,7 +29,7 @@ dev = ["pytest", "flake8"]
 
 [tool.setuptools.packages.find]
 include = ["jumpmetrics*"]  # Include all packages starting with "jumpmetrics"
-exclude = ["tests*", "analyses*", "study_1_batch_process.py", "study_2_batch_process.py", "study_3_batch_process.py", "pytest.ini"]  # Exclude test and data directories
+exclude = ["paper*", "tests*", "analyses*", "study_1_batch_process.py", "study_2_batch_process.py", "study_3_batch_process.py", "pytest.ini"]  # Exclude test and data directories
 
 [project.urls]
 "Homepage" = "https://github.com/stevenhirsch/force-plate-jump-analyses"
