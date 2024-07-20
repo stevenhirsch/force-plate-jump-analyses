@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.integrate import simpson  # Simpson's method for computing integral
 import pandas as pd
+import math
 
 
 def integrate_area(time, signal, method='trapezoidal') -> np.ndarray:
@@ -84,7 +85,7 @@ def get_finite_difference_coefficients(d: int, order_accuracy: int) -> np.ndarra
 
     # Create a dummy vector named 'vec' to ultimately hold the right-hand side of our system of equations.
     vec = np.zeros(len(master_row))
-    np.put(vec, d, np.math.factorial(d))
+    np.put(vec, d, math.factorial(d))
     # As shown above, our coefficients are then calculated by solving the system of linear equations in the
     # standard manner.
     coefficients = np.matmul(np.linalg.inv(matrix), vec)

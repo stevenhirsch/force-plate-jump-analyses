@@ -322,7 +322,10 @@ def test_ForceTimeCurveSQJTakeoffProcessor_2():
         sqj.jump_metrics_dataframe.drop('PID', axis=1).values -
         results_df.drop('PID', axis=1).values
     )[0]
-    assert np.all(diffs < ERROR_THRESHOLD)
+    diffs_less_than_threshold = np.all(diffs < ERROR_THRESHOLD)
+    if not diffs_less_than_threshold:
+        print(diffs)
+    assert diffs_less_than_threshold
 
 # Integration Test 7
 def test_process_jump_data_wrapper_func_2():

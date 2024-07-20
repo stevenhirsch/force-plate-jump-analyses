@@ -1,6 +1,8 @@
 """Wrapper function for generating jump metrics dataframe"""
+from typing import Union
 import pandas as pd
 from jumpmetrics.core.core import (
+    ForceTimeCurveTakeoffProcessor,
     ForceTimeCurveCMJTakeoffProcessor,
     ForceTimeCurveSQJTakeoffProcessor,
     ForceTimeCurveJumpLandingProcessor
@@ -83,6 +85,7 @@ def process_jump_trial(
         landing_force_trace = force_series_after_takeoff[landing_frame:]
 
     # takeoff metrics
+    takeoff: ForceTimeCurveTakeoffProcessor  # for typing only
     if jump_type == 'countermovement':
         takeoff = ForceTimeCurveCMJTakeoffProcessor(
             force_series=takeoff_force_trace,

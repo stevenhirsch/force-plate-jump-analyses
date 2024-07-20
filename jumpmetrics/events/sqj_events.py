@@ -1,8 +1,12 @@
 """Functions for SQJ events"""
 import logging
+import sys
 import numpy as np
 from scipy.signal import savgol_filter
 from scipy.signal import find_peaks  # Handy function for finding peaks from the SciPy library
+
+NOT_FOUND = -10 ** 2
+
 
 def get_start_of_propulsive_phase(
     force_data, sample_rate: float, quiet_period: int = 1,
@@ -65,6 +69,7 @@ def get_start_of_propulsive_phase(
                 break
     if unweighting_start is None:
         logging.warning(' Start of propulsive phase not found')
+        return NOT_FOUND
     return unweighting_start
 
 
@@ -84,9 +89,9 @@ def get_sqj_peak_force_event(force_series, start_of_propulsive_phase: int) -> in
         force_series[start_of_propulsive_phase:], prominence=50
     )
     if len(peaks) < 1 or start_of_propulsive_phase is None:
-        peak_force_frame = np.argmax(force_series[start_of_propulsive_phase:])
+        peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]))
     else:
-        peak_force_frame = peaks[0] + start_of_propulsive_phase
+        peak_force_frame = int(peaks[0] + start_of_propulsive_phase)
     return peak_force_frame
 
 
@@ -153,4 +158,4 @@ def find_potential_unweighting(
         logging.warning(' Unweighting phase detected during squat jump.')
         return unweighting_start
     else:
-        return -1
+        return NOT_FOUND

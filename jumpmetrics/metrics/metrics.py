@@ -1,10 +1,11 @@
 """Functions to compute CMJ metrics"""
 import logging
 import numpy as np
+from numpy.typing import NDArray
 from jumpmetrics.signal_processing.numerical import (
     compute_derivative
 )
-
+NOT_FOUND = -10 ** 2
 
 def get_bodyweight(force_series, n: int = 500) -> float:
     """Function to compute someone's bodyweight based on their static stance. The first n frames
@@ -36,10 +37,12 @@ def compute_rfd(
     Returns:
         float: RFD in Newtons per second
     """
-    if window_end is None:
+    # if window_end is None:
+    if window_end == NOT_FOUND:
         logging.warning('End of window for RFD not found, returning np.nan')
         return np.nan
-    if window_start is None:
+    # if window_start is None:
+    if window_start == NOT_FOUND:
         logging.warning('Start of window for RFD not found, returning np.nan')
         return np.nan
     if window_end <= window_start:
@@ -78,12 +81,12 @@ def compute_jump_height_from_takeoff_velocity(takeoff_velocity: float) -> float:
     jump_height = (takeoff_velocity ** 2) / (2 * 9.81)
     return jump_height
 
-def compute_jump_height_from_velocity_series(velocity_series: float) -> float:
+def compute_jump_height_from_velocity_series(velocity_series: NDArray[np.float64]) -> float:
     """Function to compute jump height from the last value of a velocity series
     before takeoff.
 
     Args:
-        velocity_series (float): Array of movement velocities
+        velocity_series (np.ndarray): Array of movement velocities
 
     Returns:
         float: Jump height in meters
@@ -117,10 +120,10 @@ def compute_average_force_between_events(force_trace, window_start: int, window_
     Returns:
         float: Average force between the events, in Newtons
     """
-    if window_start is None:
+    if window_start == NOT_FOUND:
         logging.warning("window_start is -1, returning np.nan")
         return np.nan
-    if window_end is None:
+    if window_end == NOT_FOUND:
         logging.warning('window_end is -1, returning np.nan')
         return np.nan
     if window_end <= window_start and window_end > 0:

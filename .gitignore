@@ -5,3 +5,5 @@ dist/
 *.egg-info/
 local_dev/
 .pytest_cache/
+mypy_output.txt
+flake8_output.txt

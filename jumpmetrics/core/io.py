@@ -3,6 +3,8 @@ import logging  # for logging errors
 import pandas as pd
 import numpy as np
 
+NOT_FOUND = -10 ** 2
+
 
 def load_cropped_force_data(filepath: str, freq=None) -> pd.Series:
     """Load already cropped force data from a filepath that contains several filtered
@@ -181,7 +183,7 @@ def find_frame_when_off_plate(
             consecutive_low_force_samples = 0
 
     # If we get here, no takeoff was detected
-    return None
+    return NOT_FOUND
 
 
 def get_n_seconds_before_takeoff(

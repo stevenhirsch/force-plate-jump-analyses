@@ -36,7 +36,7 @@ jobs:
         conda install pytest pytest-cov
         pytest ./tests --cov --cov-report=xml
 
-    # - name: Check types with mypy
-    #   run: |
-    #     conda install mypy 
-    #     mypy ./upliftik --ignore-missing-imports --follow-imports=skip --verbose
+    - name: Check types with mypy
+      run: |
+        conda install mypy 
+        mypy ./jumpmetrics --ignore-missing-imports --follow-imports=skip --verbose
