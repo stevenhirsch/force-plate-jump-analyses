@@ -218,7 +218,7 @@ def get_n_seconds_before_takeoff(
         return force_trace.iloc[start_loc:takeoff_loc].reset_index(drop=True)
 
 
-def find_landing_frame(force_series, n=30, threshold_value=20):
+def find_landing_frame(force_series, n: int=30, threshold_value: float=20.) -> int:
     """
     Find the landing frame in a vertical jump where the force
     remains above the threshold for a specified number of frames.
@@ -240,11 +240,3 @@ def find_landing_frame(force_series, n=30, threshold_value=20):
 
     logging.warning(' No landing frame found.')
     return -1  # Return -1 if no such frame is found
-
-def get_end_of_landing_phase(velocity_series):
-    """Function to get the end of the landing phase"""
-    velocities_greater_than_zero = np.where(velocity_series >= 0)[0]
-    if len(velocities_greater_than_zero) > 0:
-        return velocities_greater_than_zero[0]
-    else:
-        return -1

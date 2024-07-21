@@ -17,9 +17,13 @@ from jumpmetrics.metrics.metrics import (
 from jumpmetrics.events.sqj_events import (
     get_start_of_propulsive_phase, get_sqj_peak_force_event, find_potential_unweighting
 )
-from jumpmetrics.core.io import (
+from jumpmetrics.events.landing_events import (
     get_end_of_landing_phase
 )
+
+PF_B4_BRAKING = 'Peak force occurred before or at the start of the braking phase, metrics between events invalid'
+PF_B4_PROP = 'Peak force occurred before or at the start of the propulsive phase, metrics between events invalid'
+BRAKE_B4_PROP = 'Braking phase occured before or at the start of the propulsive phase, metrics between events invalid'
 
 
 class ForceTimeCurveTakeoffProcessor:
@@ -140,14 +144,14 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
         self.start_of_unweighting_phase = None
         self.start_of_braking_phase = None
 
-    def get_jump_events(self):
+    def get_jump_events(self, unweighting_phase_quiet_period=0.5, unweighting_phase_duration_check=0.175):
         """Function to get jump events for a ForceTimeCurveCMJTakeoffProcessor Class
         """
         self.start_of_unweighting_phase = find_unweighting_start(
             force_data=self.force_series,
             sample_rate=self.sampling_frequency,
-            quiet_period=0.5,  # 0.5seconds
-            duration_check=0.175  # 175 milliseconds of unweighting to avoid false positives
+            quiet_period=unweighting_phase_quiet_period,  # 0.5seconds
+            duration_check=unweighting_phase_duration_check  # 175 milliseconds of unweighting to avoid false positives
         )
         self.start_of_braking_phase = get_start_of_braking_phase_using_velocity(
             velocity_series=self.velocity_series,
@@ -238,10 +242,7 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
                 signal=self.force_series_minus_bodyweight[self.start_of_braking_phase:self.peak_force_frame]
             )
         else:
-            logging.warning(
-                """Peak force occurred before or at the start of the braking phase,
-                so impulse between events is invalid"""
-            )
+            logging.warning(PF_B4_BRAKING)
             self.jump_metrics['braking_net_vertical_impulse'] = np.nan
         if self.peak_force_frame > self.start_of_propulsive_phase:
             self.jump_metrics['propulsive_net_vertical_impulse'] = integrate_area(
@@ -249,10 +250,7 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
                 signal=self.force_series_minus_bodyweight[self.start_of_propulsive_phase:self.peak_force_frame]
             )
         else:
-            logging.warning(
-                """Peak force occurred before or at the start of the propulsive phase,
-                so impulse between events is invalid"""
-            )
+            logging.warning(PF_B4_PROP)
             self.jump_metrics['propulsive_net_vertical_impulse'] = np.nan
         if self.start_of_propulsive_phase > self.start_of_braking_phase:
             self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = integrate_area(
@@ -262,10 +260,7 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
                 ]
             )
         else:
-            logging.warning(
-                """Braking phase occured before or at the start of the propulsive phase,
-                so impulse between events is invalid"""
-            )
+            logging.warning(BRAKE_B4_PROP)
             self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = np.nan
 
         self.jump_metrics['total_net_vertical_impulse'] = integrate_area(
@@ -339,11 +334,7 @@ class ForceTimeCurveSQJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
         super().__init__(force_series, sampling_frequency)
         self.potential_unweighting_start = None
 
-    def get_jump_events(
-            self,
-            threshold_factor_for_propulsion=10,
-            threshold_factor_for_unweighting=5
-    ):
+    def get_jump_events(self, threshold_factor_for_propulsion=10, threshold_factor_for_unweighting=5):
         """Function to get jump events for a ForceTimeCurveCMJTakeoffProcessor Class
         """
         self.start_of_propulsive_phase = get_start_of_propulsive_phase(
@@ -363,10 +354,6 @@ class ForceTimeCurveSQJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
 
     def compute_jump_metrics(self):
         """Function to compute CMJ metrics
-
-        Raises:
-            ValueError: If any events are None, a ValueError is raised since metrics cannot
-            be defined without events
         """
         self.jump_metrics['propulsive_peakforce_rfd_slope_between_events'] = compute_rfd(
             force_trace = self.force_series,
@@ -476,9 +463,12 @@ class ForceTimeCurveJumpLandingProcessor:
         self.end_of_landing_phase = get_end_of_landing_phase(
             velocity_series=self.velocity
         )
-        self.peak_force_frame = np.argmax(
-            self.landing_force_trace[:self.end_of_landing_phase]
-        )
+        if self.end_of_landing_phase >= 0:
+            self.peak_force_frame = int(np.argmax(
+                self.landing_force_trace[:self.end_of_landing_phase]
+            ))
+        else:
+            self.peak_force_frame = int(np.argmax(self.landing_force_trace))
 
     def compute_landing_metrics(self):
         """Get the landing metrics"""

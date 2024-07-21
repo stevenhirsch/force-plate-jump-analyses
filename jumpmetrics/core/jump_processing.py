@@ -1,5 +1,4 @@
 """Wrapper function for generating jump metrics dataframe"""
-from typing import Union
 import pandas as pd
 from jumpmetrics.core.core import (
     ForceTimeCurveTakeoffProcessor,
