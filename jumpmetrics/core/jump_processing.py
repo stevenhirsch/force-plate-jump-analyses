@@ -1,5 +1,6 @@
 """Wrapper function for generating jump metrics dataframe"""
 import pandas as pd
+import numpy as np
 from jumpmetrics.core.core import (
     ForceTimeCurveTakeoffProcessor,
     ForceTimeCurveCMJTakeoffProcessor,
@@ -12,12 +13,14 @@ from jumpmetrics.core.io import (
     find_landing_frame
 )
 from jumpmetrics.signal_processing.filters import butterworth_filter
+from jumpmetrics.metrics.metrics import compute_jump_height_from_flight_time_events
 
 
 def process_jump_trial(
     full_force_series, sampling_frequency: int, jump_type: str, pid: str,
     threshold_for_helping_determine_takeoff: float = 1000, seconds_before_takeoff: float = 2,
-    lowpass_filter: bool = True, lowpass_cutoff_frequency: float = 50
+    lowpass_filter: bool = True, lowpass_cutoff_frequency: float = 50,
+    compute_jump_height_from_flight_time: bool = False
 ) -> dict:
     """Wrapper function for processing a jump trial
 
@@ -119,6 +122,17 @@ def process_jump_trial(
         landing.landing_metrics_dataframe,
         on='PID'
     )
+    if compute_jump_height_from_flight_time:
+        updated_landing_frame = takeoff_frame + landing_frame
+        jump_height_flight_time = compute_jump_height_from_flight_time_events(
+            takeoff_frame=takeoff_frame,
+            landing_frame=updated_landing_frame,
+            sampling_frequency=sampling_frequency
+        )
+        overall_dataframe['jump_height_flight_time'] = jump_height_flight_time
+    else:
+        overall_dataframe['jump_height_flight_time'] = np.nan
+    overall_dataframe['flight_time'] = (updated_landing_frame - takeoff_frame) / sampling_frequency
 
     results_dict = {
         'results_dataframe': overall_dataframe,

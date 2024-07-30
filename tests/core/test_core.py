@@ -211,7 +211,8 @@ def test_process_jump_data_wrapper_func_1():
         pid='F02',
         threshold_for_helping_determine_takeoff=1000,
         lowpass_filter=True,
-        lowpass_cutoff_frequency=26.64
+        lowpass_cutoff_frequency=26.64,
+        compute_jump_height_from_flight_time=True
     )
     df = results_dict['results_dataframe']
     diffs = np.abs(
@@ -341,7 +342,8 @@ def test_process_jump_data_wrapper_func_2():
         pid='P30',
         threshold_for_helping_determine_takeoff=1000,
         lowpass_filter=True,
-        lowpass_cutoff_frequency=26.64
+        lowpass_cutoff_frequency=26.64,
+        compute_jump_height_from_flight_time=True
     )
     df = results_dict['results_dataframe']
     diffs = np.abs(

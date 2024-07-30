@@ -134,3 +134,39 @@ def compute_average_force_between_events(force_trace, window_start: int, window_
         return np.nan
     average_force = force_trace[window_start:window_end].mean()
     return average_force
+
+def compute_jump_height_from_total_flight_time(
+    flight_time: float
+) -> float:
+    """Function to compute jump height from the total flight time
+
+    Args:
+        flight_time (float): Total flight time (takeoff to landing) in seconds
+
+    Returns:
+        float: Vertical jump height (in meters)
+    """
+    accel_gravity = 9.81
+    time_to_peak_height = flight_time / 2
+    jump_height = 0.5 * accel_gravity * time_to_peak_height ** 2
+    return jump_height
+
+
+def compute_jump_height_from_flight_time_events(
+    takeoff_frame: int, landing_frame: int, sampling_frequency: float
+) -> float:
+    """Function to compete jump height from flight time events
+
+    Args:
+        takeoff_frame (int): Frame corresponding to takeoff
+        landing_frame (int): Frame corresponding to landing
+        sampling_frequency (float): Sampling frequency (frames/samples per second)
+
+    Returns:
+        float: Jump height (in meters)
+    """
+    flight_time = (landing_frame - takeoff_frame) / sampling_frequency
+    jump_height = compute_jump_height_from_total_flight_time(
+        flight_time=flight_time
+    )
+    return jump_height
