@@ -5,7 +5,7 @@
 
 ## Overview
 
-The `jumpmetrics` package is a completely free, open-source toolkit for analyzing force plate data during countermovement and squat (pause) jumps. The package provides comprehensive analyses to help in understanding various aspects of jump performance and mechanics and helps with batch processing jump trials.
+The `JumpMetrics` package is a completely free, open-source toolkit for analyzing force plate data during countermovement and squat (pause) jumps. The package provides comprehensive analyses to help in understanding various aspects of jump performance and mechanics and helps with batch processing jump trials.
 
 ## Features
 - Batch processing of countermovement jump and squat jump data from `.txt` files exported from force plates (e.g., NetForce).
@@ -16,8 +16,8 @@ The `jumpmetrics` package is a completely free, open-source toolkit for analyzin
 
 ## Getting Set Up to Run the Code
 ### Prerequisites
-- **Anaconda** or **Miniconda**: Install [Anaconda](https://anaconda.org) or [Miniconda](https://docs.anaconda.com/miniconda/) on your machine.
 - **Python**: Ensure Python 3.10 or higher is installed.
+    - **Anaconda** or **Miniconda**: Install [Anaconda](https://anaconda.org) or [Miniconda](https://docs.anaconda.com/miniconda/) on your machine.
 
 ### Installation
 1. Clone the repository to your local machine:
