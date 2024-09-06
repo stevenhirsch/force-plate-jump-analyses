@@ -1,6 +1,7 @@
 """Batch processing script for study 1"""
 import os
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
@@ -8,7 +9,7 @@ from jumpmetrics.core.io import load_cropped_force_data
 from jumpmetrics.signal_processing.filters import butterworth_filter
 
 
-CREATE_PLOTS = False
+CREATE_PLOTS = True
 main_dir = os.path.join(os.getcwd(), 'analyses', 'study_1')
 data_dir = os.path.join(main_dir, 'raw_data')
 fig_dir = os.path.join(main_dir, 'figures')
@@ -47,17 +48,23 @@ for filename in tqdm(all_filenames):
                     filepath=filepath,
                     freq=None
                 )
-                filtered_force_series = butterworth_filter(
-                    arr=force_series,
-                    cutoff_frequency=cutoff_frequency,
-                    fps=2000,
-                    padding=2000
-                )
-                CMJ = ForceTimeCurveCMJTakeoffProcessor(
-                    # force_series=filtered_force_series,
-                    force_series=filtered_force_series[-4000:],
-                    sampling_frequency=2000
-                )
+                if cutoff_frequency != 'none':
+                    filtered_force_series = butterworth_filter(
+                        arr=force_series,
+                        cutoff_frequency=cutoff_frequency,
+                        fps=2000,
+                        padding=2000
+                    )
+                    CMJ = ForceTimeCurveCMJTakeoffProcessor(
+                        force_series=filtered_force_series[-4000:],
+                        sampling_frequency=2000
+                    )
+                else:
+                    # process the raw data
+                    CMJ = ForceTimeCurveCMJTakeoffProcessor(
+                        force_series=np.array(force_series)[-4000:],
+                        sampling_frequency=2000
+                    )
                 CMJ.get_jump_events()
                 CMJ.compute_jump_metrics()
                 CMJ.create_jump_metrics_dataframe(pid=pid)
@@ -91,7 +98,7 @@ for filename in tqdm(all_filenames):
                     # Force-Velocity
                     plt.plot(
                         CMJ.velocity_series[CMJ.start_of_unweighting_phase:],
-                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase:],
+                        CMJ.force_series[CMJ.start_of_unweighting_phase:],
                         color='blue'
                     )
                     plt.xlabel('Velocity (m/s)')
@@ -100,13 +107,13 @@ for filename in tqdm(all_filenames):
                     # Highlight the start of the trial
                     plt.plot(
                         CMJ.velocity_series[CMJ.start_of_unweighting_phase],
-                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase], 'go',
+                        CMJ.force_series[CMJ.start_of_unweighting_phase], 'go',
                         label='Start of Unweighting Phase'
                     )  # green circle
                     # Highlight the end of the trial
                     plt.plot(
                         CMJ.velocity_series[-1],
-                        CMJ.force_series.iloc[-1], 'ro',
+                        CMJ.force_series[-1], 'ro',
                         label='Takeoff'
                     ) # red circle
                     plt.legend()
@@ -115,7 +122,7 @@ for filename in tqdm(all_filenames):
                     # Force-Displacement
                     plt.plot(
                         CMJ.displacement_series[CMJ.start_of_unweighting_phase:],
-                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase:],
+                        CMJ.force_series[CMJ.start_of_unweighting_phase:],
                         color='blue'
                     )
                     plt.xlabel('Displacement (m)')
@@ -124,13 +131,13 @@ for filename in tqdm(all_filenames):
                     # Highlight the start of the trial
                     plt.plot(
                         CMJ.displacement_series[CMJ.start_of_unweighting_phase],
-                        CMJ.force_series.iloc[CMJ.start_of_unweighting_phase], 'go',
+                        CMJ.force_series[CMJ.start_of_unweighting_phase], 'go',
                         label='Start of Unweighting Phase'
                     )  # green circle
                     # Highlight the end of the trial
                     plt.plot(
                         CMJ.displacement_series[-1],
-                        CMJ.force_series.iloc[-1], 'ro',
+                        CMJ.force_series[-1], 'ro',
                         label='Takeoff'
                     ) # red circle
                     plt.legend()
@@ -164,8 +171,12 @@ for filename in tqdm(all_filenames):
                 CMJ.save_kinematic_dataframe(
                     dataframe_filepath=os.path.join(pid_data_dir, col + '.csv')
                 )
-                force_series_df = CMJ.force_series.reset_index()
-                force_series_df.columns = ['frame_number', 'force']  # Rename the columns
+                # force_series_df = CMJ.force_series.reset_index()
+                force_series_df = pd.DataFrame({
+                    'frame_number': np.arange(start=0, stop=len(CMJ.force_series), step=1),
+                    'force': CMJ.force_series
+                })
+                # force_series_df.columns = ['frame_number', 'force']  # Rename the columns
                 # Save the DataFrame to a .csv file with specified column names
                 force_series_df.to_csv(os.path.join(pid_data_dir, col + '_force_series.csv'), index=False)
                 tmp_df = pd.concat([

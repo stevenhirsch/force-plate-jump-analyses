@@ -116,7 +116,7 @@ def get_peak_force_event(force_series, start_of_propulsive_phase: int) -> int:
         force_series[start_of_propulsive_phase:], prominence=50
     )
     if len(peaks) == 0:
-        peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]))
+        peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]) + start_of_propulsive_phase)
     else:
         peak_force_frame = int(peaks[0] + start_of_propulsive_phase)
     return peak_force_frame
