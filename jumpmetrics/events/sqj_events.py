@@ -1,6 +1,5 @@
 """Functions for SQJ events"""
 import logging
-import sys
 import numpy as np
 from scipy.signal import savgol_filter
 from scipy.signal import find_peaks  # Handy function for finding peaks from the SciPy library
@@ -89,7 +88,8 @@ def get_sqj_peak_force_event(force_series, start_of_propulsive_phase: int) -> in
         force_series[start_of_propulsive_phase:], prominence=50
     )
     if len(peaks) < 1 or start_of_propulsive_phase is None:
-        peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]))
+        peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]) + start_of_propulsive_phase)
+
     else:
         peak_force_frame = int(peaks[0] + start_of_propulsive_phase)
     return peak_force_frame

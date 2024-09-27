@@ -218,21 +218,24 @@ def get_n_seconds_before_takeoff(
         return force_trace.iloc[start_loc:takeoff_loc].reset_index(drop=True)
 
 
-def find_landing_frame(force_series, n: int=30, threshold_value: float=20.) -> int:
+def find_landing_frame(
+        force_series, sampling_frequency: float, time: float=0.015, threshold_value: float=20.
+) -> int:
     """
     Find the landing frame in a vertical jump where the force
     remains above the threshold for a specified number of frames.
 
     Parameters:
     force_series (list or array): The series of force values recorded over time.
-    n (int): The number of consecutive frames that must be above the threshold. Defaults to 30.
+    sampling_frequency (float): The sampling frequency of the data.
+    time (float): The time (in seconds) that must be above the threshold. Defaults to 0.015 seconds.
     threshold_value (float): The force threshold value. Defaults to 20.
 
     Returns:
     int: The index of the landing frame where the force first meets the criteria. Returns -1 if no such frame is found.
     """
     total_frames = len(force_series)
-
+    n = int(sampling_frequency * time)
     for i in range(total_frames - n + 1):
         # Check if the next 'n' frames are all above the threshold_value
         if all(force >= threshold_value for force in force_series[i:i + n]):

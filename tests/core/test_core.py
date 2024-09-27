@@ -55,7 +55,8 @@ def test_ForceTimeCurveCMJTakeoffProcessor_1():
     CMJ = ForceTimeCurveCMJTakeoffProcessor(
         # force_series=filtered_force_series,
         force_series=filtered_force_series[-4000:],
-        sampling_frequency=2000
+        sampling_frequency=2000,
+        weighing_time=0.25
     )
     CMJ.get_jump_events()
     CMJ.compute_jump_metrics()
@@ -208,6 +209,7 @@ def test_process_jump_data_wrapper_func_1():
         full_force_series=full_summed_force,
         sampling_frequency=2000,
         jump_type='countermovement',
+        weighing_time=0.25,
         pid='F02',
         threshold_for_helping_determine_takeoff=1000,
         lowpass_filter=True,
@@ -254,7 +256,8 @@ def test_ForceTimeCurveSQJTakeoffProcessor_1():
     )
     sqj = ForceTimeCurveSQJTakeoffProcessor(
         force_series=filtered_force_series,
-        sampling_frequency=sampling_frequency
+        sampling_frequency=sampling_frequency,
+        weighing_time=0.5
     )
     sqj.get_jump_events(
         threshold_factor_for_propulsion=10,
@@ -306,7 +309,8 @@ def test_ForceTimeCurveSQJTakeoffProcessor_2():
     )
     sqj = ForceTimeCurveSQJTakeoffProcessor(
         force_series=filtered_force_series,
-        sampling_frequency=sampling_frequency
+        sampling_frequency=sampling_frequency,
+        weighing_time=0.5
     )
     sqj.get_jump_events(
         threshold_factor_for_propulsion=10,
@@ -339,8 +343,10 @@ def test_process_jump_data_wrapper_func_2():
         full_force_series=full_summed_force,
         sampling_frequency=1000,
         jump_type='squat',
+        weighing_time=0.5,
         pid='P30',
         threshold_for_helping_determine_takeoff=1000,
+        seconds_for_determining_landing_phase=0.030,
         lowpass_filter=True,
         lowpass_cutoff_frequency=26.64,
         compute_jump_height_from_flight_time=True

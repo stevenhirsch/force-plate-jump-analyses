@@ -17,8 +17,9 @@ from jumpmetrics.metrics.metrics import compute_jump_height_from_flight_time_eve
 
 
 def process_jump_trial(
-    full_force_series, sampling_frequency: int, jump_type: str, pid: str,
+    full_force_series, sampling_frequency: int, jump_type: str, weighing_time: float, pid: str,
     threshold_for_helping_determine_takeoff: float = 1000, seconds_before_takeoff: float = 2,
+    seconds_for_determining_landing_phase: float = 0.015,
     lowpass_filter: bool = True, lowpass_cutoff_frequency: float = 50,
     compute_jump_height_from_flight_time: bool = False
 ) -> dict:
@@ -28,10 +29,13 @@ def process_jump_trial(
         full_force_series (array): The entire force series
         sampling_frequency (int): Sampling frequency of the force plate
         jump_type (str): Type of jump. Must be either "countermovement" or "squat"
+        weighing_time (float): The time used to weigh the person before the jump
         pid (str): Participant ID (to append to result dataframe)
         threshold_for_helping_determine_takeoff (float, optional): Parameter for helping to determine takeoff.
         Defaults to 1000.
         seconds_before_takeoff (float, optional): Amount to crop data before takeoff. Defaults to 2.
+        seconds_for_determining_landing_phase (float, optional): Amount of seconds for determining the landing phase.
+        Defaults to 0.015 seconds.
         lowpass_filter (bool, optional): Whether to filter the force data or not. Defaults to True.
         lowpass_cutoff_frequency (float, optional): Lowpass filter cutoff frequency. Defaults to 50.
 
@@ -75,7 +79,9 @@ def process_jump_trial(
     force_series_after_takeoff = force_series[takeoff_frame:]
     landing_frame = find_landing_frame(
         force_series_after_takeoff,
-        threshold_value=20
+        threshold_value=20,
+        sampling_frequency=sampling_frequency,
+        time=seconds_for_determining_landing_phase
     )
     off_forceplate_first_frame = find_frame_when_off_plate(
         force_trace=force_series_after_takeoff[landing_frame:],
@@ -91,12 +97,14 @@ def process_jump_trial(
     if jump_type == 'countermovement':
         takeoff = ForceTimeCurveCMJTakeoffProcessor(
             force_series=takeoff_force_trace,
-            sampling_frequency=sampling_frequency
+            sampling_frequency=sampling_frequency,
+            weighing_time=weighing_time
         )
     else:
         takeoff = ForceTimeCurveSQJTakeoffProcessor(
             force_series=takeoff_force_trace,
-            sampling_frequency=sampling_frequency
+            sampling_frequency=sampling_frequency,
+            weighing_time=weighing_time
         )
 
     takeoff.get_jump_events()

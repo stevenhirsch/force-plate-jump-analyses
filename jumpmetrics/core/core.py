@@ -29,10 +29,14 @@ BRAKE_B4_PROP = 'Braking phase occured before or at the start of the propulsive 
 class ForceTimeCurveTakeoffProcessor:
     """Base class for computing jump events and metrics"""
 
-    def __init__(self, force_series, sampling_frequency=2000):
+    def __init__(self, force_series, sampling_frequency=2000, weighing_time=0.4):
         self.force_series = np.array(force_series)
         self.sampling_frequency = sampling_frequency
-        self.body_weight = get_bodyweight(force_series=self.force_series)
+        self.body_weight = get_bodyweight(
+            force_series=self.force_series,
+            sampling_frequency=self.sampling_frequency,
+            sec=weighing_time
+        )
         self.body_mass_kg = self.body_weight / 9.81
 
         # Kinematic series
@@ -139,8 +143,8 @@ class ForceTimeCurveTakeoffProcessor:
 
 class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
     """Class for computing CMJ takeoff events and metrics"""
-    def __init__(self, force_series, sampling_frequency=2000):
-        super().__init__(force_series, sampling_frequency)
+    def __init__(self, force_series, sampling_frequency=2000, weighing_time=0.25):
+        super().__init__(force_series, sampling_frequency, weighing_time)
         self.start_of_unweighting_phase = None
         self.start_of_braking_phase = None
 
@@ -330,8 +334,8 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
 
 class ForceTimeCurveSQJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
     """Class for computing SQJ takeoff events and metrics"""
-    def __init__(self, force_series, sampling_frequency=2000):
-        super().__init__(force_series, sampling_frequency)
+    def __init__(self, force_series, sampling_frequency=2000, weighing_time=0.25):
+        super().__init__(force_series, sampling_frequency, weighing_time=weighing_time)
         self.potential_unweighting_start = None
 
     def get_jump_events(self, threshold_factor_for_propulsion=10, threshold_factor_for_unweighting=5):

@@ -7,17 +7,19 @@ from jumpmetrics.signal_processing.numerical import (
 )
 NOT_FOUND = -10 ** 2
 
-def get_bodyweight(force_series, n: int = 500) -> float:
+def get_bodyweight(force_series, sampling_frequency: float = 2000, sec: float = 0.25) -> float:
     """Function to compute someone's bodyweight based on their static stance. The first n frames
-    are assumed to be "static"
+    are assumed to be "static
 
     Args:
-        force_series (array): Force series of a CMJ
-        n (int, optional): Number of frames. Defaults to 500.
+        force_series (NDArray): Force series of jump
+        sampling_frequency (float, optional): Sampling frequency of force plate. Defaults to 2000.
+        sec (float, optional): Number of seconds to weigh someone. Defaults to 0.4.
 
     Returns:
-        float: Bodyweight in Newtons
+        float: Bodyweight in newtons
     """
+    n = int(sampling_frequency * sec)
     average_of_first_n_frames = force_series[0:n].mean()
     return average_of_first_n_frames
 
