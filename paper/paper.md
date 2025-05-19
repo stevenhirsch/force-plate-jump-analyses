@@ -112,13 +112,12 @@ Table 2. Table of general metrics along with potential typical applications. Not
 | Net Vertical Impulse  |✓         |✓            |           |`[@mcmahon:2017]`, `[@bird:2022]`|
 | Peak Force            |✓         |✓ (during landing)|           |`[@mcmahon:2017]`, `[@pedley2020]`|
 | Maximum Force         |✓         |✓ (during landing)|           |`[@mcmahon:2017]`, `[@pedley2020]`|
-| Average Force         |          |             |           |                  |
 | Jump Height           |✓         |             |✓          |`[@watkins:2017]`, `[@mcmahon:2017]`|
 | Braking Time          |          |✓            |           |`[@bird:2022]`|
 | Propulsive Time       |          |✓            |           |`[@bird:2022]`|
 
 
-NOTE: ** `jump_height_flight_time` and `flight_time` are only available when using the `process_jump_trial()` function as both takeoff and landing must be detected to determine the flight time.
+Note that `jump_height_flight_time` and `flight_time` are only available when using the `process_jump_trial()` function as both takeoff and landing must be detected to determine the flight time.
 
 # Acknowledgements
 
