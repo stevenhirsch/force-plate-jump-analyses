@@ -20,13 +20,22 @@ The `JumpMetrics` package is a completely free, open-source toolkit for analyzin
 - **Python**: Ensure Python 3.10 or higher is installed.
     - **Anaconda** or **Miniconda**: Install [Anaconda](https://anaconda.org) or [Miniconda](https://docs.anaconda.com/miniconda/) on your machine.
 
-### Option 1: Direct Installation from GitHub
+### Option 1: Install via PyPI
+
+*NOTE:* Pending upload to PyPI
+
+Simply run:
+```
+pip install jumpmetrics
+```
+
+### Option 2: Direct Installation from GitHub (may be slow due to repo size)
 Ensure that you have `pip` installed in your python environment. Then, just run:
 ```
 pip install git+https://github.com/stevenhirsch/force-plate-jump-analyses.git 
 ```
 
-### Option 2: Build and Install from a Local Copy
+### Option 3: Build and Install from a Local Copy
 1. Clone the repository:
 ```
 git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
@@ -53,7 +62,7 @@ python test_install.py
 
 for additional verification that the package installed correctly.
 
-### Option 3: Development Setup with Conda
+### Option 4: Development Setup with Conda
 1. Clone the repository:
 ```
 git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
