@@ -15,3 +15,7 @@ exclude test_*.py
 exclude *.pyc
 exclude __pycache__
 prune tests
+
+# Exclude images and analyses when building package
+exclude analyses/*
+exclude *.png
