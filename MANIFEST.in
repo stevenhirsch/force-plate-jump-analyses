@@ -17,5 +17,8 @@ exclude __pycache__
 prune tests
 
 # Exclude images and analyses when building package
-exclude analyses/*
+prune analyses/*
 exclude *.png
+exclude *.jpg
+exclude *.jpeg
+exclude *.gif

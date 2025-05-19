@@ -1,0 +1,6 @@
+# Mark image directories as export-ignore so they don't get included in pip install
+analyses export-ignore
+*.png export-ignore
+*.jpg export-ignore
+*.jpeg export-ignore
+*.gif export-ignore
