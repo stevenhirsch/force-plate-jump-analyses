@@ -31,6 +31,20 @@ Computes the rate of force development (RFD) during a jump between specified win
 **Returns**:
 - `float`: RFD in Newtons per second.
 
+Note that for default parameters, one could use this function to compute RFD between any time window. For example, suppose you wanted to compute RFD in the first 250ms after the start of the breaking phase. You could compute this with something along the lines of:
+```python
+from jumpmetrics.metrics import compute_rfd
+time_after_window_start = 0.25  # seconds, or 250ms
+frames_after_window_start = int(time_after_window_start * fps)
+window_end = start_of_breaking_phase + frames_after_window_start
+rfd = compute_rfd(
+    force_trace=force_trace,
+    window_start = start_of_breaking_phase,
+    window_end = window_end,
+    sampling_frequency = fps 
+)
+```
+
 #### `compute_jump_height_from_takeoff_velocity`
 
 Computes jump height from takeoff velocity.

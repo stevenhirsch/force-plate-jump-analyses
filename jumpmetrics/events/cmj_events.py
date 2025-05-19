@@ -7,8 +7,8 @@ from scipy.signal import find_peaks  # Handy function for finding peaks from the
 NOT_FOUND = -10 ** 2
 
 def find_unweighting_start(
-    force_data, sample_rate: float, quiet_period: int = 1,
-    threshold_factor: float = 5, window_size: float = 0.2, duration_check: float = 0.1
+    force_data, sample_rate: float, quiet_period: float = 1.,
+    threshold_factor: float = 5., window_size: float = 0.2, duration_check: float = 0.1
 ) -> int:
     """Function to find the start of the unweighting phase
 
@@ -17,7 +17,7 @@ def find_unweighting_start(
 
         sample_rate (float): Sampling rate of the force plate
 
-        quiet_period (int, optional): This is the duration (in seconds) at the beginning of the 
+        quiet_period (float, optional): This is the duration (in seconds) at the beginning of the 
         data that you consider to be the "quiet stance" period. During this time, the participant should
         be standing relatively still. The default is set to 1 second, but you might adjust this based on
         your experimental protocol. Defaults to 1 second.

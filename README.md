@@ -14,62 +14,58 @@ The `JumpMetrics` package is a completely free, open-source toolkit for analyzin
 - Easy-to-use functions for detailed jump performance insights.
 - Extensible framework for additional analysis and custom data processing.
 
-## Getting Set Up to Run the Code
+## Installation
+
 ### Prerequisites
 - **Python**: Ensure Python 3.10 or higher is installed.
     - **Anaconda** or **Miniconda**: Install [Anaconda](https://anaconda.org) or [Miniconda](https://docs.anaconda.com/miniconda/) on your machine.
 
-### Installation
-1. Clone the repository to your local machine:
-    ```
-    git clone https://github.com/your-username/force-plate-jump-analyses.git
-    cd force-plate-jump-analyses
-    ```
+### Option 1: Direct Installation from GitHub
+Ensure that you have `pip` installed in your python environment. Then, just run:
+```
+pip install git+https://github.com/stevenhirsch/force-plate-jump-analyses.git 
+```
 
-2. Create the environment using the provided `env.yml` file:
-    ```
-    conda env create -f env.yml
-    ```
+### Option 2: Build and Install from a Local Copy
+1. Clone the repository:
+```
+git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
+cd force-plate-jump-analyses
+```
 
-3. Activate the environment:
-    ```
-    conda activate jumpmetrics
-    ```
+2. Build the package
+```
+pip install build
+python -m build
+```
 
-4. Optionally, for extra pacakges used for local development, run:
-    ```
-    conda env update -f local_env.yml
-    ```
+This command will generate distribution archives (`.tar.gz` and `.whl` files) in the `dist` directory.
 
-## Building the Package
-If you want to build the package for installation, you can do so using `python -m build` after cloning the repository. Follow these steps to create a package:
+3. Install the wheel file (adjust the filename to whichever version you have built)
+```
+pip install dist/jumpmetrics-0.1.0-py3-none-any.wh
+```
 
-1. **Install `build` package**:
-    ```
-    pip install build
-    ```
+After going through these steps, try running:
+```
+python test_install.py
+```
 
-2. **Build the package**:
-    Navigate to the root directory where `setup.py` is located, and run:
-    ```
-    python -m build
-    ```
+for additional verification that the package installed correctly.
 
-    This command will generate distribution archives (`.tar.gz` and `.whl` files) in the `dist` directory.
+### Option 3: Development Setup with Conda
+1. Clone the repository:
+```
+git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
+cd force-plate-jump-analyses
+```
 
-3. **Check the build**:
-    Ensure the package was created successfully by checking the `dist` directory for the generated files.
-
-    ```
-    ls dist/
-    ```
-
-
-### Installing the Built Package
-To install the built package locally, use `pip` with the path to the `.whl` file:
-
-`pip install dist/jumpmetrics-0.1.0-py3-none-any.whl`
-
+2. Create and activate the conda environment
+```
+conda env create -f env.yml
+conda activate jumpmetrics
+conda env update local_env.yml
+```
 
 ## Detailed Documentation
 For a complete guide on available functions and their usage, please refer to the [Documentation](./docs/index.md).
@@ -79,7 +75,7 @@ We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md
 -->
 
 ## Batch Processing Data
-Examples of how to batch process data are found in `study_1_batch_process.py`,  `study_2_batch_process.py`, and `study_3_batch_process.py`. You can run either file with a command such as:
+Examples of how to batch process data for a study are found in `study_1_batch_process.py`,  `study_2_batch_process.py`, and `study_3_batch_process.py`. You can run either file with a command such as:
 ```
 python study_1_batch_process.py
 ```
@@ -91,15 +87,4 @@ If you encounter any issues, please open an [issue on GitHub](https://github.com
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ## Contact
-For any questions or further information, please contact me on my [website](https://www.stevenhirsch.ca/contact/)
-<!--
-## Acknowledgements
-Special thanks to everyone who has contributed to the development of this package.
-
-## Additional Resources
-- [Force Plate Analysis Fundamentals](https://example.com/force-plate-analysis)
-- [CMJ Performance Analysis Techniques](https://example.com/cmj-performance)
-
-## Changelog
-For detailed information on recent updates, check the [Changelog](./CHANGELOG.md).
--->
+For any questions or further information, please contact me on my [website](https://www.stevenhirsch.ca/contact/) or via [LinkedIn](https://www.linkedin.com/in/steven-m-hirsch/).

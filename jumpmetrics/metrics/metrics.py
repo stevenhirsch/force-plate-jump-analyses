@@ -14,7 +14,7 @@ def get_bodyweight(force_series, sampling_frequency: float = 2000, sec: float = 
     Args:
         force_series (NDArray): Force series of jump
         sampling_frequency (float, optional): Sampling frequency of force plate. Defaults to 2000.
-        sec (float, optional): Number of seconds to weigh someone. Defaults to 0.4.
+        sec (float, optional): Number of seconds to weigh someone. Defaults to 0.25.
 
     Returns:
         float: Bodyweight in newtons

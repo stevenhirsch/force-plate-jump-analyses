@@ -1,0 +1,17 @@
+# Include environment and documentation files
+include env.yml
+include readme.md
+
+# Include any additional files you might want to distribute
+include *.md
+include LICENSE*
+
+# Include any data files in the package
+
+# Exclude development files
+exclude .gitignore
+exclude *.ipynb
+exclude test_*.py
+exclude *.pyc
+exclude __pycache__
+prune tests
