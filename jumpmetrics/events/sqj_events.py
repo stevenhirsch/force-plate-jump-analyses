@@ -20,7 +20,7 @@ def get_start_of_propulsive_phase(
 
         quiet_period (int, optional): This is the duration (in seconds) at the beginning of the 
         data that you consider to be the "quiet stance" period. During this time, the participant should
-        be standing relatively still. The default is set to 1 second, but you might adjust this based on
+        be squatting relatively still. The default is set to 1 second, but you might adjust this based on
         your experimental protocol. Defaults to 1 second.
 
         threshold_factor (float, optional): This is the number of standard deviations below the mean force
