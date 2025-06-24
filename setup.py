@@ -81,7 +81,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/stevenhirsch/force-plate-jump-analyses",
     packages=find_packages(
-        exclude=["tests", "tests.*", "analyses", "analyses.*"]
+        exclude=["tests", "tests.*", "analyses", "analyses.*", "docker_example", "docker_example.*"]
     ),
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -22,3 +22,8 @@ exclude *.png
 exclude *.jpg
 exclude *.jpeg
 exclude *.gif
+
+# Exclude Docker-related files and examples
+prune docker_example
+exclude Dockerfile
+exclude .dockerignore

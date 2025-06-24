@@ -22,7 +22,7 @@ The `JumpMetrics` package is a completely free, open-source toolkit for analyzin
 
 ### Option 1: Install via PyPI
 
-*NOTE:* Pending upload to PyPI
+*NOTE:* Pending upload to PyPI- This has not been completed yet, so skip Option 1 for now.
 
 Simply run:
 ```
@@ -52,7 +52,7 @@ This command will generate distribution archives (`.tar.gz` and `.whl` files) in
 
 3. Install the wheel file (adjust the filename to whichever version you have built)
 ```
-pip install dist/jumpmetrics-0.1.0-py3-none-any.wh
+pip install dist/jumpmetrics-0.1.0-py3-none-any.whl
 ```
 
 After going through these steps, try running:
@@ -74,6 +74,70 @@ cd force-plate-jump-analyses
 conda env create -f env.yml
 conda activate jumpmetrics
 conda env update local_env.yml
+```
+
+### Option 5: Using Docker
+For users who prefer Docker or desire a reproducible environment across different systems, we also provide a Dockerfile to easily set up and run jumpmetrics. This Dockerfile provides a way for you to separate your environment (the Docker image) from the analysis code (mounted scripts).
+
+1. Build the Docker image:
+```bash
+docker build -t jumpmetrics .
+```
+
+You can also add tags to this build:
+```bash
+docker build -t jumpmetrics:v1.0 .
+```
+
+2. Create your analysis script. See an example at [docker_example/scripts/docker_example.py](/docker_example/scripts/docker_example.py).
+
+3. Run your analysis with Docker:
+```bash
+docker run -it --rm \
+  -v /path/to/your/scripts:/scripts \
+  -v /path/to/your/input/data:/data/input \
+  -v /path/to/your/output:/data/output \
+  jumpmetrics python /scripts/my_analysis.py
+```
+
+The Docker container provides a pre-configured environment with jumpmetrics installed. You can:
+- Mount your analysis scripts using `-v /path/to/your/scripts:/scripts`
+- Mount your input data using `-v /path/to/your/input/data:/data/input`
+- Mount an output directory using `-v /path/to/your/output:/data/output`
+
+Directory structure example:
+```
+~/my_jump_analysis/
+  ├── scripts/
+  │   └── my_analysis.py    # Your analysis script
+  ├── input/
+  │   └── F02_CTRL1.txt    # Your force plate data
+  └── output/              # Results will appear here
+      ├── jump_metrics.csv
+      ├── kinematic_data.csv
+      └── force_curve.png
+```
+
+With the current repository structure, you could therefore run:
+```bash
+docker run -it --rm \
+  -v ./docker_example/scripts:/scripts \
+  -v ./docker_example/input:/data/input \
+  -v ./docker_example/output:/data/output \
+  jumpmetrics python /scripts/docker_example.py
+```
+
+to test this output (check out [/docker_example/input](/docker_example/input/) and [/docker_example/output](/docker_example/output/) to see what this looks like).
+
+This setup allows you to:
+1. Keep your analysis scripts separate from the package
+2. Modify your analysis without rebuilding the Docker image
+3. Run different analyses using the same container
+4. Share your analysis scripts while ensuring they run in the same environment
+
+If you want to explore this environment interactively, run:
+```bash
+docker run -it jumpmetrics bash
 ```
 
 ## Data Processing
