@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
+from jumpmetrics.core.processors import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import load_cropped_force_data
 from jumpmetrics.signal_processing.filters import butterworth_filter
 

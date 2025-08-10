@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
+from jumpmetrics.core.processors import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import (
     load_raw_force_data_with_no_column_headers, sum_dual_force_components,
     find_first_frame_where_force_exceeds_threshold,

@@ -143,7 +143,7 @@ docker run -it jumpmetrics bash
 ## Data Processing
 The following code snippet should help to generally showcase how one could get started quickly with `jumpmetrics` for calculating takeoff metrics:
 ```python
-from jumpmetrics.core.core import ForceTimeCurveCMJTakeoffProcessor
+from jumpmetrics.core.processors import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import (
     load_raw_force_data_with_no_column_headers, sum_dual_force_components,
     find_first_frame_where_force_exceeds_threshold,

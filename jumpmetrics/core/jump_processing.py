@@ -1,7 +1,7 @@
 """Wrapper function for generating jump metrics dataframe"""
 import pandas as pd
 import numpy as np
-from jumpmetrics.core.core import (
+from jumpmetrics.core.processors import (
     ForceTimeCurveTakeoffProcessor,
     ForceTimeCurveCMJTakeoffProcessor,
     ForceTimeCurveSQJTakeoffProcessor,

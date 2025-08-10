@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from jumpmetrics.core.io import load_cropped_force_data
 from jumpmetrics.signal_processing.filters import butterworth_filter
-from jumpmetrics.core.core import (
+from jumpmetrics.core.processors import (
     ForceTimeCurveCMJTakeoffProcessor, ForceTimeCurveSQJTakeoffProcessor, ForceTimeCurveJumpLandingProcessor
 )
 from jumpmetrics.core.jump_processing import process_jump_trial

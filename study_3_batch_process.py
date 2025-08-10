@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from jumpmetrics.core.core import (
+from jumpmetrics.core.processors import (
     ForceTimeCurveCMJTakeoffProcessor, ForceTimeCurveSQJTakeoffProcessor
 )
 from jumpmetrics.core.io import (
