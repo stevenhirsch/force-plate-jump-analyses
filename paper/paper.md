@@ -35,13 +35,16 @@ Researchers and practitioners (e.g., sports team scientists, analysts, or coache
 ## Event Detections and Metrics
 `JumpMetrics` computes various events and metrics for the countermovement and squat jump leveraging the vertical axis data from a force plate. The events (and thus metrics) are slightly different between the jump variations, given the differences in their movement executions. There are classes for processing various phases of the countermovement jump, a helper function to process the entire jump and landing, as well as individual functions for even more granularity for analyses. Furthermore, `JumpMetrics` computes the vertical axis acceleration, velocity, and displacement of the estimated center of mass trajectory for each frame of data, irrespective of whether one is using a triaxial or uniaxial force plate. These data are computed by first dividing the force trace by the individual's computed bodymass to obtain the acceleration data. Then, the acceleration signal is integrated to compute the instantaneous velocity. Finally, the signal is integrated one more time to compute the instataneous displacement. Some examples of these computed waveforms are shown in Figures 1, 2, and 3.
 
-![Example acceleration waveform (i.e., the raw force trace divided by the body mass, which was estimated from bodyweight).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/acceleration.png){ width=25% }
+![Example acceleration waveform (i.e., the raw force trace divided by the body mass, which was estimated from bodyweight).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/acceleration.png){ width=100% }
+
 Figure 1. Example countermovement jump acceleration trace with events detected during the takeoff phase. Positive accelerations represent the center of mass accelerating upwards, whereas negative accelerations represent the center of mass accelerating downwards towards the floor/force plate.
 
-![Example velocity waveform (i.e., the integrated acceleration waveform, assuming 0 velocity during quiet standing).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/velocity.png){ width=25% }
+![Example velocity waveform (i.e., the integrated acceleration waveform, assuming 0 velocity during quiet standing).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/velocity.png){ width=100% }
+
 Figure 2. Example countermovement jump velocity trace with events detected during the takeoff phase. Positive velocities represent the center of mass is moving upwards, whereas negative velocities represent the center of mass moving downwards.
 
-![Example displacement waveform (i.e., the integrated velocity waveform, assuming 0 displacement during quiet standing).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/displacement.png){ width=25% }
+![Example displacement waveform (i.e., the integrated velocity waveform, assuming 0 displacement during quiet standing).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/displacement.png){ width=100% }
+
 Figure 3. Example countermovement jump displacement trace with events detected during the takeoff phase. Positive displacements represent the center of mass being higher relative to quiet standing, whereas negative displacements represent the center of mass being closer to the floor relative to quiet standing.
 
 To compute the relevant events and metrics, there are specific methods that a user should adhere to that are outlined in `@mcmahon:2018`. These methods underpin the assumptions required to collect and process data with the code provided in this package. First, the jumper must stand still (i.e., minimizing swaying or any other body movements) at the start of the data collection and for at least 1 second before starting the initiation of the jump. This quiet standing is used to calculate one's bodyweight, and bodyweight is used for subsequent acceleration, velocity, and displacement calculations used for event detections (as well as for computing net vertical impulse). The default setting in this package is currently to use the first 0.4 seconds of the trial to compute bodyweight (as this was found to work well for previous analyses), but users can tune this parameter themselves for their own data collections depending on the length of the quiet standing at the start of the data collection. For a countermovement jump, the functions in this package also require the person to perform one continuous downwards and upwards motion during the jump; any pausing may negatively impact the event detection algorithms provided. In contrast, for the squat jump the default parameter for identifying the start of the propulsive phase expects at least a 1 second pause. In practice, previous research has outlined a pause should be approximately 3 seconds `[@vanHooren2017]`. The functions provided in `JumpMetrics` permit the user to select a different minimum pause to assume if the default of 1 second is not appropriate for their research.
@@ -52,7 +55,8 @@ There are two main phases preceeding the moment of takeoff during countermovemen
 
 `JumpMetrics` computes the start of the unweighting phase in the same manner as outlined in `@owen:2014` whereby the first frame of force data that exceeds five times the standard deviation of the force data (default value; this is a tuneable parameter depending on the data collection parameters) during quiet standing (sometimes referred to as the weighing phase) defines the start of the unweighting phase. The braking phase starts at the frame corresponding to the maximum downward movement velocity (of the individual's estimated center of mass; see Figure 2). The propulsive phase starts at the frame corresponding to the minimum downward displacement (of the individual's estimated center of mass; see Figure 3). This event is used because it is reliably detected and avoids any potential awkwardness of using a minimum positive velocity to define the start of this event whereby the person is moving upwards, but is still considered to be in the "braking" phase (e.g., if the minimum threshold to determine the start of the propulsive phase is 0.10m/s, but the person is currently moving 0.05m/s upwards they would still be in the "braking" phase). The peak force event is captured using `find_peaks` from the `scipy` package and looks for a "peak" in the force series. The takeoff event is detected by looking for the first frame of data whereby the force series is below a certain threshold (default is 10 Newtons) for a specific period of time (default is 0.25 seconds). `JumpMetrics` makes these various parameters for detecting events tunable in cases where the defaults may not accurately detect events due to unexpected noise in the data or if there are any changes in the methodology proposed with future research.
 
-![Example countermovement jump force-time trace with events detected during the takeoff phase.](../analyses/study_1/figures/F02/CTRL1/literature_cutoff/force.png){ width=25% }
+![Example countermovement jump force-time trace with events detected during the takeoff phase.](../analyses/study_1/figures/F02/CTRL1/literature_cutoff/force.png){ width=100% }
+
 Figure 4. Example countermovement jump force-time trace with events detected during the takeoff phase.
 
 
@@ -60,11 +64,13 @@ Figure 4. Example countermovement jump force-time trace with events detected dur
 
 #### Squat Jumps
 Given that the squat jump is intentionally performed with a pause to minimize the influence of the stretch shortening cycle of the lower body muscles from a continuous countermovement (i.e., there is no lowering phase), the only events `JumpMetrics` detects are are the start of the propulsive phase, the peak force event, and the takeoff event. The start of the propulsive phase is the first frame of data that exceeds five times the standard deviation of the force data (default value; this is a tuneable parameter depending on the data collection parameters) during the squat phase. The peak force event is computed similarly to the countermovement jumps whereby `find_peaks` from the `scipy` package and looks for a "peak" in the force series. The takeoff event is detected by looking for the first frame of data whereby the force series is below a certain threshold (default is 10 Newtons) for a specific period of time (default is 0.25 seconds).
-![Example squat jump force-time trace during the takeoff phase.](../analyses/study_3/figures/SQT/P02/3_5/literature_cutoff/force.png){ width=25% }
+![Example squat jump force-time trace during the takeoff phase.](../analyses/study_3/figures/SQT/P02/3_5/literature_cutoff/force.png){ width=100% }
+
 Figure 5. Example squat jump force-time trace during the takeoff phase.
 
 Although there is not supposed to be any countermovement/lowering phase during a squat jump, depending on the instructions and guidance provided to the participant, as well as their general movement behaviours, there may be a minor countermovement that would negate the trial from being a true squat jump. `JumpMetrics` detects and flags this motion (with a warning and an estimated frame in the metrics output) to make the user aware of this potential flaw in the squat jump trial.
-![Example squat jump force-time trace with an inappropriate countermovement detected during the takeoff phase.](../analyses/study_3/figures/SQT/P02/1_2/literature_cutoff/force.png){ width=25% }
+![Example squat jump force-time trace with an inappropriate countermovement detected during the takeoff phase.](../analyses/study_3/figures/SQT/P02/1_2/literature_cutoff/force.png){ width=100% }
+
 Figure 6. Example squat jump force-time trace with an inappropriate countermovement detected during the takeoff phase.
 
 `JumpMetrics` computes the rate of force development, net vertical impulse, and average force between all events detected during the squat jump. Additionally, metrics such as the jump height (based on the net vertical impulse and using the impulse-momentum relationship and the velocity at the final frame of data before takeoff), takeoff velocity, movement time, and propulsive time are also all computed. Table 1 contains a complete list of the metrics `JumpMetrics` exports for squat jumps. Note that in order for the events and metrics to be computed accurately, a brief weighing phase (default is the first 0.25 seconds of data, but this can be modified depending on how long the individual was standing) must be present in the waveform in order to determine the individual's bodyweight.
@@ -82,51 +88,51 @@ There is also a wrapper function named `process_jump_trial()` that combines the 
 Table 1. Specific metrics computed and exported by `JumpMetrics` at Takeoff for Countermovement Jumps (CMJ) and Squat Jumps (SQJ).
 | Metric                                               | CMJ | SQJ | Description                    |
 |------------------------------------------------------|-----|-----|--------------------------------|
-| propulsive_peakforce_rfd_slope_between_events         | ✓   | ✓   |Rate of force development computed as the slope between the start of the propulsive phase to the frame of peak force (N/s)|
-| propulsive_peakforce_rfd_instantaneous_average_between_events | ✓   | ✓   |Rate of force development computed as the average instantaneous value between each frame the start of the propulsive phase to the frame of peak force (N/s)|
-| propulsive_peakforce_rfd_instantaneous_peak_between_events | ✓   | ✓   |Rate of force development computed as the peak instantaneous value between each frame the start of the propulsive phase to the frame of peak force (N/s)|
-| braking_peakforce_rfd_slope_between_events            | ✓   |     |Rate of force development computed as the slope between the start of the braking phase to the frame of peak force (N/s)|
-| braking_peakforce_rfd_instantaneous_average_between_events | ✓   |     |Rate of force development computed as the average instantaneous value between each frame during the start of the braking phase to the frame of peak force (N/s)|
-| braking_peakforce_rfd_instantaneous_peak_between_events | ✓   |     |Rate of force development computed as the peak instantaneous value between each frame during the start of the braking phase to the frame of peak force (N/s)|
-| braking_propulsive_rfd_slope_between_events           | ✓   |     |Rate of force development slope from the braking phase to the start of the propulsive phase (N/s)|
-| braking_propulsive_rfd_instantaneous_average_between_events | ✓   |     |Rate of force development computed as the average instantaneous value from the braking to the propulsive phase (N/s)|
-| braking_propulsive_rfd_instantaneous_peak_between_events | ✓   |     |Rate of force development computed as the peak instantaneous value from braking to the propulsive phase (N/s)|
-| braking_net_vertical_impulse                          | ✓   |     |Net vertical impulse during the braking phase (N⋅s)|
-| propulsive_net_vertical_impulse                       | ✓   |     |Net vertical impulse during the propulsive phase (N⋅s)|
-| braking_to_propulsive_net_vertical_impulse            | ✓   |     |Net vertical impulse between the start of the braking phase to the propulsive phase (N⋅s)|
-| total_net_vertical_impulse                            | ✓   | ✓   |Net vertical impulse during the entire jump (N⋅s)|
-| peak_force                                            | ✓   | ✓   |Peak force defined using find_peaks() in scipy (N)|
-| maximum_force                                         | ✓   | ✓   |Global maximum value of force recorded during the jump (N)|
-| average_force_of_braking_phase                        | ✓   |     |Average force applied during the braking phase (N)|
-| average_force_of_propulsive_phase                     | ✓   | ✓   |Average force applied during the propulsive phase (N)|
-| takeoff_velocity                                      | ✓   | ✓   |Estimated takeoff velocity of the center of mass (m/s)|
-| jump_height_takeoff_velocity                          | ✓   | ✓   |Jump height calculated using the estimated takeoff velocity of the center of mass (m)|
-| jump_height_net_vertical_impulse                      | ✓   | ✓   |Jump height calculated using the impulse-momentum theorem. Usually identical to the jump height based on takeoff velocity except for rounding errors due to slightly different computations (m)|
-| jump_height_flight_time**                             | ✓   | ✓   |Jump height calculated using flight time (m)|
-| flight_time**                                         | ✓   | ✓   |Flight time of the jump (s)|
-| movement_time                                         | ✓   | ✓   |Time between initiation of jump and takeoff (s)|
-| unweighting_time                                      | ✓   |     |Time during the unweighting phase of the jump (s)|
-| braking_time                                          | ✓   |     |Time during the braking phase of the jump (s)|
-| propulsive_time                                       | ✓   | ✓   |Time during the propulsive phase of the jump (s)|
-| lowering_displacement                                 | ✓   |     |Estimated displacement of the center of mass during the lowering phase (m)|
-| frame_start_of_unweighting_phase                      | ✓   |     |Frame corresponding to the start of the unweighting phase|
-| frame_start_of_breaking_phase                         | ✓   |     |Frame corresponding to the start of the braking phase|
-| frame_start_of_propulsive_phase                       | ✓   | ✓   |Frame corresponding to the start of the propulsive phase|
-| frame_peak_force                                      | ✓   | ✓   |Frame corresponding to the peak force during the jump|
-| frame_of_potential_unweighting_start                  |     | ✓   |Frame corresponding to the potential start of the unweighting phase|
+| propulsive_peakforce_rfd_slope_between_events         | yes   | yes   |Rate of force development computed as the slope between the start of the propulsive phase to the frame of peak force (N/s)|
+| propulsive_peakforce_rfd_instantaneous_average_between_events | yes   | yes   |Rate of force development computed as the average instantaneous value between each frame the start of the propulsive phase to the frame of peak force (N/s)|
+| propulsive_peakforce_rfd_instantaneous_peak_between_events | yes   | yes   |Rate of force development computed as the peak instantaneous value between each frame the start of the propulsive phase to the frame of peak force (N/s)|
+| braking_peakforce_rfd_slope_between_events            | yes   |     |Rate of force development computed as the slope between the start of the braking phase to the frame of peak force (N/s)|
+| braking_peakforce_rfd_instantaneous_average_between_events | yes   |     |Rate of force development computed as the average instantaneous value between each frame during the start of the braking phase to the frame of peak force (N/s)|
+| braking_peakforce_rfd_instantaneous_peak_between_events | yes   |     |Rate of force development computed as the peak instantaneous value between each frame during the start of the braking phase to the frame of peak force (N/s)|
+| braking_propulsive_rfd_slope_between_events           | yes   |     |Rate of force development slope from the braking phase to the start of the propulsive phase (N/s)|
+| braking_propulsive_rfd_instantaneous_average_between_events | yes   |     |Rate of force development computed as the average instantaneous value from the braking to the propulsive phase (N/s)|
+| braking_propulsive_rfd_instantaneous_peak_between_events | yes   |     |Rate of force development computed as the peak instantaneous value from braking to the propulsive phase (N/s)|
+| braking_net_vertical_impulse                          | yes   |     |Net vertical impulse during the braking phase (N⋅s)|
+| propulsive_net_vertical_impulse                       | yes   |     |Net vertical impulse during the propulsive phase (N⋅s)|
+| braking_to_propulsive_net_vertical_impulse            | yes   |     |Net vertical impulse between the start of the braking phase to the propulsive phase (N⋅s)|
+| total_net_vertical_impulse                            | yes   | yes   |Net vertical impulse during the entire jump (N⋅s)|
+| peak_force                                            | yes   | yes   |Peak force defined using find_peaks() in scipy (N)|
+| maximum_force                                         | yes   | yes   |Global maximum value of force recorded during the jump (N)|
+| average_force_of_braking_phase                        | yes   |     |Average force applied during the braking phase (N)|
+| average_force_of_propulsive_phase                     | yes   | yes   |Average force applied during the propulsive phase (N)|
+| takeoff_velocity                                      | yes   | yes   |Estimated takeoff velocity of the center of mass (m/s)|
+| jump_height_takeoff_velocity                          | yes   | yes   |Jump height calculated using the estimated takeoff velocity of the center of mass (m)|
+| jump_height_net_vertical_impulse                      | yes   | yes   |Jump height calculated using the impulse-momentum theorem. Usually identical to the jump height based on takeoff velocity except for rounding errors due to slightly different computations (m)|
+| jump_height_flight_time**                             | yes   | yes   |Jump height calculated using flight time (m)|
+| flight_time**                                         | yes   | yes   |Flight time of the jump (s)|
+| movement_time                                         | yes   | yes   |Time between initiation of jump and takeoff (s)|
+| unweighting_time                                      | yes   |     |Time during the unweighting phase of the jump (s)|
+| braking_time                                          | yes   |     |Time during the braking phase of the jump (s)|
+| propulsive_time                                       | yes   | yes   |Time during the propulsive phase of the jump (s)|
+| lowering_displacement                                 | yes   |     |Estimated displacement of the center of mass during the lowering phase (m)|
+| frame_start_of_unweighting_phase                      | yes   |     |Frame corresponding to the start of the unweighting phase|
+| frame_start_of_breaking_phase                         | yes   |     |Frame corresponding to the start of the braking phase|
+| frame_start_of_propulsive_phase                       | yes   | yes   |Frame corresponding to the start of the propulsive phase|
+| frame_peak_force                                      | yes   | yes   |Frame corresponding to the peak force during the jump|
+| frame_of_potential_unweighting_start                  |     | yes   |Frame corresponding to the potential start of the unweighting phase|
 
 
 Table 2. Table of general metrics along with potential typical applications. Note that the appropriateness of a potential metric for the listed purpose (or beyond the listed purpose) is dependent on how the data was collected and the particular question the analyst is attempting to answer. This table is a guide only based on a limited selection of papers.
 
 | General Metric        | Capacity | Injury Risk | Readiness | Example Paper(s) |
 |-----------------------|----------|-------------|-----------|------------------|
-| RFD (Rate of Force Development) |✓         |✓            |           |`[@mcmahon:2017]`, `[@bird:2022]`|
-| Net Vertical Impulse  |✓         |✓            |           |`[@mcmahon:2017]`, `[@bird:2022]`|
-| Peak Force            |✓         |✓ (during landing)|           |`[@mcmahon:2017]`, `[@pedley2020]`|
-| Maximum Force         |✓         |✓ (during landing)|           |`[@mcmahon:2017]`, `[@pedley2020]`|
-| Jump Height           |✓         |             |✓          |`[@watkins:2017]`, `[@mcmahon:2017]`|
-| Braking Time          |          |✓            |           |`[@bird:2022]`|
-| Propulsive Time       |          |✓            |           |`[@bird:2022]`|
+| RFD (Rate of Force Development) |yes         |yes            |           |`[@mcmahon:2017]`, `[@bird:2022]`|
+| Net Vertical Impulse  |yes         |yes            |           |`[@mcmahon:2017]`, `[@bird:2022]`|
+| Peak Force            |yes         |yes (during landing)|           |`[@mcmahon:2017]`, `[@pedley2020]`|
+| Maximum Force         |yes         |yes (during landing)|           |`[@mcmahon:2017]`, `[@pedley2020]`|
+| Jump Height           |yes         |             |yes          |`[@watkins:2017]`, `[@mcmahon:2017]`|
+| Braking Time          |          |yes            |           |`[@bird:2022]`|
+| Propulsive Time       |          |yes            |           |`[@bird:2022]`|
 
 
 Note that `jump_height_flight_time` and `flight_time` are only available when using the `process_jump_trial()` function as both takeoff and landing must be detected to determine the flight time.
