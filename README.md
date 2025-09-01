@@ -231,6 +231,15 @@ python study_1_batch_process.py
 
 For a complete guide on available functions and their usage, please refer to the [Documentation](./docs/index.md).
 
+### Example Output
+
+The following is an example of the events that can be detected during the takeoff phase of a vertical jump:
+
+![Example countermovement jump force-time trace with events detected during the takeoff phase.](/analyses/study_1/figures/F02/CTRL1/literature_cutoff/force.png)
+
+
+These events are the foundation for all computed metrics. For a full list of metrics for both the takeoff and landing phases, please refer to the tables in ![](/paper/paper.md).
+
 ## Assumptions In this Package
 
 Please read the paper for full details. A summary of a portion of the paper is provided below:
@@ -239,6 +248,9 @@ Please read the paper for full details. A summary of a portion of the paper is p
 
 ## Reporting Issues
 If you encounter any issues, please open an [issue on GitHub](https://github.com/stevenhirsch/force-plate-jump-analyses/issues).
+
+## Contributing
+We welcome contributions from researchers, practitioners, and developers! Please see our [Contributing Guidelines](docs/development/contributing.md) for details on how to get started.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
