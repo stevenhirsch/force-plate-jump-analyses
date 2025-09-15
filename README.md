@@ -18,7 +18,7 @@ The `JumpMetrics` package is a completely free, open-source toolkit for analyzin
 
 ### Prerequisites
 - **Python**: Ensure Python 3.10 or higher is installed.
-    - **Anaconda** or **Miniconda**: Install [Anaconda](https://anaconda.org) or [Miniconda](https://docs.anaconda.com/miniconda/) on your machine.
+- **pixi**: Install [pixi](https://pixi.sh/latest/) on your machine.
 
 ### Option 1: Install via PyPI
 
@@ -62,18 +62,54 @@ python test_install.py
 
 for additional verification that the package installed correctly.
 
-### Option 4: Development Setup with Conda
+### Option 4: Development Setup with pixi
 1. Clone the repository:
-```
+```bash
 git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
 cd force-plate-jump-analyses
 ```
 
-2. Create and activate the conda environment
+2. Create and activate the development environment:
+```bash
+pixi install
+pixi shell --feature dev
 ```
-conda env create -f env.yml
-conda activate jumpmetrics
-conda env update local_env.yml
+
+This will set up a development environment with all necessary dependencies including:
+- Core dependencies: pandas, matplotlib, scipy, scikit-learn
+- Development tools: pytest, mypy, flake8, jupyter, ipython
+- Visualization libraries: plotly, seaborn
+- Build tools and utilities
+
+The development environment provides additional tools for contributing to the project.
+
+### Available pixi Tasks
+
+The project includes several predefined tasks that can be run using `pixi run <task-name>`:
+
+#### Main Tasks (Default Environment)
+- `verify`: Run installation verification test
+- `batch_process_study_1`: Process data for study 1
+- `batch_process_study_2`: Process data for study 2
+- `batch_process_study_3`: Process data for study 3
+
+#### Development Tasks
+- `build`: Build the package distribution
+- `lint`: Run flake8 linting on source code
+- `clean`: Remove build artifacts and cache files
+- `test`: Run pytest test suite
+- `typecheck`: Run mypy type checking
+
+Example usage:
+```bash
+# Run tests
+pixi run test
+
+# Build the package
+pixi run build
+
+# Run linting
+pixi run lint
 ```
 
 ### Option 5: Using Docker

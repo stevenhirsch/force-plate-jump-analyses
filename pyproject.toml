@@ -1,3 +1,80 @@
+[project]
+authors = [{name = "stevenhirsch", email = "stevehirsch94@gmail.com"}]
+dependencies = []
+name = "JumpMetrics"
+requires-python = ">= 3.10"
+version = "0.1.0"
+
 [build-system]
-requires = ["setuptools>=42", "wheel", "build", "pyyaml"]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+# Base dependencies
+[tool.pixi.dependencies]
+python = ">=3.10"
+pandas = "~=2.0.0"
+matplotlib = "*"
+scipy = "~=1.14.0"
+scikit-learn = "~=1.3.0"
+pip = "~=23.0"
+
+[tool.pixi.pypi-dependencies]
+jumpmetrics = { path = ".", editable = true }
+
+# Development environment dependencies
+[tool.pixi.feature.dev.dependencies]
+ipython = "~=8.12.0"
+jupyter = "~=1.0.0"
+jupyterlab = ">=4.0"
+tqdm = "*"
+pytest = "*"
+mypy = "*"
+ipywidgets = "*"
+plotly = "*"
+seaborn = "*"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+flake8 = "*"
+build = "*"
+
+# Testing environment for CI/CD
+[tool.pixi.feature.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+mypy = "*"
+
+[tool.pixi.feature.test.pypi-dependencies]
+flake8 = "*"
+
+# Define environments
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
+
+# Main tasks (using default environment)
+[tool.pixi.tasks]
+verify = "python test_install.py"
+batch_process_study_1 = "python scripts/study_1_batch_process.py"
+batch_process_study_2 = "python scripts/study_2_batch_process.py"
+batch_process_study_3 = "python scripts/study_3_batch_process.py"
+
+# Dev environment tasks
+[tool.pixi.feature.dev.tasks]
+build = "python -m build"
+lint = "flake8 src/"
+clean = "rm -rf build/ dist/ *.egg-info/"
+
+# Test environment tasks
+[tool.pixi.feature.test.tasks]
+test = "pytest tests/"
+# test-cov = "pytest --cov=jumpmetrics tests/"
+typecheck = "mypy src/"
+
+# Configure mypy
+[tool.mypy]
+ignore_missing_imports = true
