@@ -10,3 +10,4 @@ flake8_output.txt
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+CLAUDE.md

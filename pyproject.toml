@@ -59,9 +59,9 @@ test = { features = ["test"], solve-group = "default" }
 # Main tasks (using default environment)
 [tool.pixi.tasks]
 verify = "python test_install.py"
-batch_process_study_1 = "python scripts/study_1_batch_process.py"
-batch_process_study_2 = "python scripts/study_2_batch_process.py"
-batch_process_study_3 = "python scripts/study_3_batch_process.py"
+batch_process_study_1 = "python study_1_batch_process.py"
+batch_process_study_2 = "python study_2_batch_process.py"
+batch_process_study_3 = "python study_3_batch_process.py"
 
 # Dev environment tasks
 [tool.pixi.feature.dev.tasks]

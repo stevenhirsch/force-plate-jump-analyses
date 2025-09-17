@@ -1,4 +1,4 @@
-# force-plate-jump-analyses
+# JumpMetrics
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
@@ -36,31 +36,48 @@ pip install git+https://github.com/stevenhirsch/force-plate-jump-analyses.git
 ```
 
 ### Option 3: Build and Install from a Local Copy
+
+#### Method A: Using pixi (Recommended)
 1. Clone the repository:
-```
+```bash
 git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
 cd force-plate-jump-analyses
 ```
 
-2. Build the package
+2. Set up the environment and build:
+```bash
+pixi install
+pixi shell --feature dev
+pixi run build
 ```
+
+3. Install the built package:
+```bash
+pip install dist/jumpmetrics-0.1.0-py3-none-any.whl
+```
+
+#### Method B: Using pip directly
+1. Clone the repository:
+```bash
+git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
+cd force-plate-jump-analyses
+```
+
+2. Build the package:
+```bash
 pip install build
 python -m build
 ```
 
-This command will generate distribution archives (`.tar.gz` and `.whl` files) in the `dist` directory.
-
-3. Install the wheel file (adjust the filename to whichever version you have built)
-```
+3. Install the wheel file (adjust the filename to whichever version you have built):
+```bash
 pip install dist/jumpmetrics-0.1.0-py3-none-any.whl
 ```
 
-After going through these steps, try running:
-```
+After going through these steps, verify the installation:
+```bash
 python test_install.py
 ```
-
-for additional verification that the package installed correctly.
 
 ### Option 4: Development Setup with pixi
 1. Clone the repository:
