@@ -363,7 +363,7 @@ def test_process_jump_data_wrapper_func_2():
 def test_random_input_data():
     """Testing classes with random input data"""
     np.random.seed(0)
-    random_data = np.random.randn(2000) * 750
+    random_data = np.random.randn(2200) * 750  # 1.1s at 2000Hz - above minimum requirement
     random_bw = np.random.rand(1)[0]
     random_takeoff_vel = np.random.rand(1)[0]
 

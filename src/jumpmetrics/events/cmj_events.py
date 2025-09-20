@@ -40,9 +40,6 @@ def find_unweighting_start(
         int: Frame number corresponding to the start of the unweighting phase
     """
     # Input validation
-    if len(force_data) < sample_rate * quiet_period:
-        raise ValueError(f"Force data too short ({len(force_data)} samples) for quiet period ({quiet_period}s at {sample_rate}Hz)")
-
     if sample_rate <= 0:
         raise ValueError(f"Sample rate must be positive, got {sample_rate}")
 
@@ -54,6 +51,18 @@ def find_unweighting_start(
 
     if window_size <= 0:
         raise ValueError(f"Window size must be positive, got {window_size}")
+
+    # Require minimum data length for reliable analysis
+    # Prevent edge cases with very short data (like 1.0s) that cause platform-specific numerical issues
+    min_data_duration = 1.05  # Just above 1.0s to catch problematic edge cases
+    min_samples = int(min_data_duration * sample_rate)
+    if len(force_data) < min_samples:
+        raise ValueError(f"Insufficient data for reliable analysis. Got {len(force_data)} samples "
+                        f"({len(force_data)/sample_rate:.2f}s), need at least {min_samples} samples "
+                        f"({min_data_duration:.2f}s) for meaningful countermovement jump analysis")
+
+    if len(force_data) < sample_rate * quiet_period:
+        raise ValueError(f"Force data too short ({len(force_data)} samples) for quiet period ({quiet_period}s at {sample_rate}Hz)")
     # Convert window size from seconds to samples
     window_samples = int(window_size * sample_rate)
 

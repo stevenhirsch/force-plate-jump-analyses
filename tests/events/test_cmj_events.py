@@ -91,9 +91,9 @@ class TestFindUnweightingStart:
 
     def test_custom_quiet_period(self):
         """Test with custom quiet period"""
-        # Create data with varying quiet periods
+        # Create data with varying quiet periods (but sufficient total length)
         short_quiet = np.full(500, 1000)   # 0.5s quiet
-        unweighting = np.full(200, 700)
+        unweighting = np.full(600, 700)    # Extended unweighting phase for sufficient data
         force_data = np.concatenate([short_quiet, unweighting])
 
         sample_rate = 1000
@@ -106,19 +106,17 @@ class TestFindUnweightingStart:
         assert result >= 500
 
     def test_edge_case_very_short_data(self):
-        """Documents behavior with very short data"""
-        force_data = np.full(1000, 1000)  # 1s of data to avoid validation error
+        """Test that function raises ValueError for insufficient data"""
+        force_data = np.full(1000, 1000)  # 1s of data - insufficient for reliable analysis
         sample_rate = 1000
 
-        result = find_unweighting_start(
-            force_data, sample_rate,
-            quiet_period=0.5,  # Reasonable quiet period
-            duration_check=0.01  # Shorter duration check
-        )
-
-        # ACTUAL BEHAVIOR: Algorithm may detect false positives with constant signal due to smoothing edge effects
-        # Returns a detection around frame 962 due to filter boundary effects (varies by platform)
-        assert 955 <= result <= 970
+        # Should raise ValueError for insufficient data (need at least 2 seconds)
+        with pytest.raises(ValueError, match="Insufficient data for reliable analysis"):
+            find_unweighting_start(
+                force_data, sample_rate,
+                quiet_period=0.5,
+                duration_check=0.01
+            )
 
     def test_noisy_data_with_smoothing(self):
         """Test that smoothing helps with noisy data"""
