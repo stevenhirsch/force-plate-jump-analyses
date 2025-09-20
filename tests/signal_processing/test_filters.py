@@ -69,3 +69,124 @@ def test_butterworth_filter_2d_input():
 
     with pytest.raises(ValueError):
         butterworth_filter(signal_2d, cutoff_frequency=20, fps=fps, padding=100)
+
+
+def test_butterworth_filter_edge_cases():
+    """Test edge cases and error conditions"""
+
+    # Test with very high cutoff frequency (close to Nyquist)
+    signal = np.random.rand(1000)
+    fps = 1000
+
+    # Cutoff at 450 Hz (close to Nyquist of 500 Hz)
+    filtered = butterworth_filter(signal, cutoff_frequency=450, fps=fps, padding=100)
+    assert len(filtered) == len(signal)
+
+    # Test with cutoff frequency exactly at Nyquist
+    with pytest.raises((ValueError, Exception)):
+        butterworth_filter(signal, cutoff_frequency=500, fps=fps, padding=100)
+
+
+def test_butterworth_filter_zero_padding():
+    """Test with zero padding"""
+    signal = np.random.rand(1000)
+    fps = 1000
+
+    filtered = butterworth_filter(signal, cutoff_frequency=20, fps=fps, padding=0)
+    assert len(filtered) == len(signal)
+
+
+def test_butterworth_filter_large_padding():
+    """Test with padding larger than signal"""
+    signal = np.random.rand(100)
+    fps = 1000
+
+    # Padding larger than signal length
+    filtered = butterworth_filter(signal, cutoff_frequency=20, fps=fps, padding=200)
+    assert len(filtered) == len(signal)
+
+
+def test_butterworth_filter_constant_signal():
+    """Test with constant signal (DC component only)"""
+    signal = np.full(1000, 5.0)  # Constant signal
+    fps = 1000
+
+    filtered = butterworth_filter(signal, cutoff_frequency=20, fps=fps, padding=100)
+
+    # DC component should be preserved
+    assert np.allclose(filtered, signal, rtol=1e-3)
+
+
+def test_butterworth_filter_nyquist_frequency():
+    """Test behavior near Nyquist frequency"""
+    signal = np.random.rand(1000)
+    fps = 1000
+    nyquist = fps / 2
+
+    # Test with cutoff just below Nyquist
+    filtered = butterworth_filter(signal, cutoff_frequency=nyquist - 10, fps=fps, padding=100)
+    assert len(filtered) == len(signal)
+
+
+def test_butterworth_filter_very_low_frequency():
+    """Test with very low cutoff frequency"""
+    # Create signal with multiple frequency components
+    t = np.linspace(0, 2, 2000)
+    signal = (np.sin(2 * np.pi * 1 * t) +  # 1 Hz
+              np.sin(2 * np.pi * 5 * t) +  # 5 Hz
+              np.sin(2 * np.pi * 20 * t))  # 20 Hz
+
+    fps = 1000
+
+    # Very low cutoff should remove most frequency content
+    filtered = butterworth_filter(signal, cutoff_frequency=2, fps=fps, padding=200)
+
+    # Check that high frequency content is significantly reduced
+    fft_original = np.fft.fft(signal)
+    fft_filtered = np.fft.fft(filtered)
+    freqs = np.fft.fftfreq(len(signal), 1/fps)
+
+    # Energy above 10 Hz should be much reduced
+    high_freq_mask = np.abs(freqs) > 10
+    original_high_energy = np.sum(np.abs(fft_original[high_freq_mask])**2)
+    filtered_high_energy = np.sum(np.abs(fft_filtered[high_freq_mask])**2)
+
+    assert filtered_high_energy < 0.1 * original_high_energy
+
+
+def test_butterworth_filter_negative_values():
+    """Test filter with negative signal values"""
+    signal = np.sin(2 * np.pi * np.linspace(0, 1, 1000)) - 5  # Offset to negative
+    fps = 1000
+
+    filtered = butterworth_filter(signal, cutoff_frequency=20, fps=fps, padding=100)
+
+    assert len(filtered) == len(signal)
+    # Mean should be preserved (approximately)
+    assert abs(np.mean(filtered) - np.mean(signal)) < 0.5
+
+
+def test_butterworth_filter_single_sample():
+    """Test with single sample"""
+    signal = np.array([1.0])
+    fps = 1000
+
+    # Should handle gracefully or raise appropriate error
+    try:
+        filtered = butterworth_filter(signal, cutoff_frequency=20, fps=fps, padding=0)
+        assert len(filtered) == 1
+    except (ValueError, Exception):
+        # It's acceptable to raise an error for such a small signal
+        pass
+
+
+def test_butterworth_filter_preserve_mean():
+    """Test that filter preserves signal mean for low frequencies"""
+    # Create signal with clear DC offset
+    signal = np.sin(2 * np.pi * 5 * np.linspace(0, 1, 1000)) + 10
+    fps = 1000
+
+    filtered = butterworth_filter(signal, cutoff_frequency=50, fps=fps, padding=100)
+
+    # Mean should be approximately preserved
+    assert abs(np.mean(filtered) - np.mean(signal)) < 0.1

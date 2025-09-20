@@ -17,7 +17,7 @@ def find_unweighting_start(
 
         sample_rate (float): Sampling rate of the force plate
 
-        quiet_period (float, optional): This is the duration (in seconds) at the beginning of the 
+        quiet_period (float, optional): This is the duration (in seconds) at the beginning of the
         data that you consider to be the "quiet stance" period. During this time, the participant should
         be standing relatively still. The default is set to 1 second, but you might adjust this based on
         your experimental protocol. Defaults to 1 second.
@@ -39,6 +39,21 @@ def find_unweighting_start(
     Returns:
         int: Frame number corresponding to the start of the unweighting phase
     """
+    # Input validation
+    if len(force_data) < sample_rate * quiet_period:
+        raise ValueError(f"Force data too short ({len(force_data)} samples) for quiet period ({quiet_period}s at {sample_rate}Hz)")
+
+    if sample_rate <= 0:
+        raise ValueError(f"Sample rate must be positive, got {sample_rate}")
+
+    if quiet_period <= 0:
+        raise ValueError(f"Quiet period must be positive, got {quiet_period}")
+
+    if duration_check <= 0:
+        raise ValueError(f"Duration check must be positive, got {duration_check}")
+
+    if window_size <= 0:
+        raise ValueError(f"Window size must be positive, got {window_size}")
     # Convert window size from seconds to samples
     window_samples = int(window_size * sample_rate)
 
@@ -66,8 +81,11 @@ def find_unweighting_start(
                 unweighting_start = i
                 break
     if unweighting_start is None:
+        logging.info(f"No unweighting detected with threshold_factor={threshold_factor}. "
+                    f"Try lowering threshold_factor or check if this is actually a countermovement jump.")
         return NOT_FOUND
     else:
+        logging.debug(f"Unweighting detected at frame {unweighting_start} ({unweighting_start/sample_rate:.3f}s)")
         return unweighting_start
 
 def get_start_of_braking_phase_using_velocity(velocity_series, start_of_unweighting_phase) -> int:
@@ -75,6 +93,7 @@ def get_start_of_braking_phase_using_velocity(velocity_series, start_of_unweight
 
     Args:
         velocity_series (array): Velocity waveform of the jump
+        start_of_unweighting_phase: Frame where unweighting started
 
     Returns:
         int: Frame associated with the start of the braking phase
@@ -112,6 +131,10 @@ def get_peak_force_event(force_series, start_of_propulsive_phase: int) -> int:
     Returns:
         int: Frame corresponding to the peak force
     """
+    if start_of_propulsive_phase is None or start_of_propulsive_phase < 0:
+        logging.warning('Invalid propulsive phase start, using global maximum for peak force detection')
+        return int(np.argmax(force_series))
+
     peaks, _ = find_peaks(
         force_series[start_of_propulsive_phase:], prominence=50
     )

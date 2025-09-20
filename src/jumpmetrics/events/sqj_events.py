@@ -84,12 +84,15 @@ def get_sqj_peak_force_event(force_series, start_of_propulsive_phase: int) -> in
     Returns:
         int: Frame corresponding to the peak force
     """
+    if start_of_propulsive_phase is None or start_of_propulsive_phase < 0:
+        logging.warning('Invalid propulsive phase start, using global maximum for peak force detection')
+        return int(np.argmax(force_series))
+
     peaks, _ = find_peaks(
         force_series[start_of_propulsive_phase:], prominence=50
     )
-    if len(peaks) < 1 or start_of_propulsive_phase is None:
+    if len(peaks) < 1:
         peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]) + start_of_propulsive_phase)
-
     else:
         peak_force_frame = int(peaks[0] + start_of_propulsive_phase)
     return peak_force_frame

@@ -30,6 +30,21 @@ class ForceTimeCurveTakeoffProcessor:
     """Base class for computing jump events and metrics"""
 
     def __init__(self, force_series, sampling_frequency=2000, weighing_time=0.4):
+        # Input validation
+        if len(force_series) == 0:
+            raise ValueError("Force series cannot be empty")
+
+        if sampling_frequency <= 0:
+            raise ValueError(f"Sampling frequency must be positive, got {sampling_frequency}")
+
+        if weighing_time <= 0:
+            raise ValueError(f"Weighing time must be positive, got {weighing_time}")
+
+        # Check if weighing time is reasonable for the data length
+        data_duration = len(force_series) / sampling_frequency
+        if weighing_time > data_duration:
+            raise ValueError(f"Weighing time ({weighing_time:.3f}s) exceeds data duration ({data_duration:.3f}s)")
+
         self.force_series = np.array(force_series)
         self.sampling_frequency = sampling_frequency
         self.body_weight = get_bodyweight(
@@ -38,6 +53,10 @@ class ForceTimeCurveTakeoffProcessor:
             sec=weighing_time
         )
         self.body_mass_kg = self.body_weight / 9.81
+
+        # Warning for edge cases that may produce unreliable results
+        if abs(self.body_weight) < 1:  # Very low body weight
+            logging.warning(f"Very low body weight detected ({self.body_weight:.2f}N). Results may be unreliable.")
 
         # Kinematic series
         self.acceleration_series = (self.force_series - self.body_weight) / self.body_mass_kg
@@ -467,7 +486,7 @@ class ForceTimeCurveJumpLandingProcessor:
         self.end_of_landing_phase = get_end_of_landing_phase(
             velocity_series=self.velocity
         )
-        if self.end_of_landing_phase >= 0:
+        if self.end_of_landing_phase > 0:
             self.peak_force_frame = int(np.argmax(
                 self.landing_force_trace[:self.end_of_landing_phase]
             ))
@@ -493,7 +512,7 @@ class ForceTimeCurveJumpLandingProcessor:
                 self.landing_metrics['max_landing_force'] = [
                     np.nan
                 ]
-            if self.end_of_landing_phase < 0:
+            if self.end_of_landing_phase <= 0:
                 self.landing_metrics['average_landing_force'] = [np.nan]
                 self.landing_metrics['landing_time'] = [np.nan]
                 self.landing_metrics['landing_displacement'] = [np.nan]

@@ -139,6 +139,12 @@ def find_first_frame_where_force_exceeds_threshold(force_trace: pd.Series, thres
     Returns:
         int: Frame where force exceeds threshold.
     """
+    # Input validation
+    if len(force_trace) == 0:
+        raise ValueError("Force trace cannot be empty")
+
+    if not isinstance(threshold, (int, float)):
+        raise ValueError(f"Threshold must be a number, got {type(threshold)}")
     # Can set a nice threshold if you have participants' body mass a priori, for example
     frames_where_force_exceeds_threshold = np.where(force_trace >= threshold)[0]
     if len(frames_where_force_exceeds_threshold) == 0:

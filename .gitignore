@@ -7,6 +7,14 @@ local_dev/
 .pytest_cache/
 mypy_output.txt
 flake8_output.txt
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
