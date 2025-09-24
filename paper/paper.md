@@ -35,15 +35,15 @@ Researchers and practitioners (e.g., sports team scientists, analysts, or coache
 ## Event Detections and Metrics
 `JumpMetrics` computes various events and metrics for the countermovement and squat jump leveraging the vertical axis data from a force plate. The events (and thus metrics) are slightly different between the jump variations, given the differences in their movement executions. There are classes for processing various phases of the countermovement jump, a helper function to process the entire jump and landing, as well as individual functions for even more granularity for analyses. Furthermore, `JumpMetrics` computes the vertical axis acceleration, velocity, and displacement of the estimated center of mass trajectory for each frame of data, irrespective of whether one is using a triaxial or uniaxial force plate. These data are computed by first dividing the force trace by the individual's computed bodymass to obtain the acceleration data. Then, the acceleration signal is integrated to compute the instantaneous velocity. Finally, the signal is integrated one more time to compute the instataneous displacement. Some examples of these computed waveforms are shown in Figures 1, 2, and 3.
 
-![Example acceleration waveform (i.e., the raw force trace divided by the body mass, which was estimated from bodyweight).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/acceleration.png){ width=100% }
+![Example acceleration waveform (i.e., the raw force trace divided by the body mass, which was estimated from bodyweight).](../example_images/acceleration.png){ width=100% }
 
 Figure 1. Example countermovement jump acceleration trace with events detected during the takeoff phase. Positive accelerations represent the center of mass accelerating upwards, whereas negative accelerations represent the center of mass accelerating downwards towards the floor/force plate.
 
-![Example velocity waveform (i.e., the integrated acceleration waveform, assuming 0 velocity during quiet standing).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/velocity.png){ width=100% }
+![Example velocity waveform (i.e., the integrated acceleration waveform, assuming 0 velocity during quiet standing).](../example_images/velocity.png){ width=100% }
 
 Figure 2. Example countermovement jump velocity trace with events detected during the takeoff phase. Positive velocities represent the center of mass is moving upwards, whereas negative velocities represent the center of mass moving downwards.
 
-![Example displacement waveform (i.e., the integrated velocity waveform, assuming 0 displacement during quiet standing).](../analyses/study_2/figures/F02/CTRL1/group_cutoff/displacement.png){ width=100% }
+![Example displacement waveform (i.e., the integrated velocity waveform, assuming 0 displacement during quiet standing).](../example_images/displacement.png){ width=100% }
 
 Figure 3. Example countermovement jump displacement trace with events detected during the takeoff phase. Positive displacements represent the center of mass being higher relative to quiet standing, whereas negative displacements represent the center of mass being closer to the floor relative to quiet standing.
 
@@ -55,7 +55,7 @@ There are two main phases preceeding the moment of takeoff during countermovemen
 
 `JumpMetrics` computes the start of the unweighting phase in the same manner as outlined in `@owen:2014` whereby the first frame of force data that exceeds five times the standard deviation of the force data (default value; this is a tuneable parameter depending on the data collection parameters) during quiet standing (sometimes referred to as the weighing phase) defines the start of the unweighting phase. The braking phase starts at the frame corresponding to the maximum downward movement velocity (of the individual's estimated center of mass; see Figure 2). The propulsive phase starts at the frame corresponding to the minimum downward displacement (of the individual's estimated center of mass; see Figure 3). This event is used because it is reliably detected and avoids any potential awkwardness of using a minimum positive velocity to define the start of this event whereby the person is moving upwards, but is still considered to be in the "braking" phase (e.g., if the minimum threshold to determine the start of the propulsive phase is 0.10m/s, but the person is currently moving 0.05m/s upwards they would still be in the "braking" phase). The peak force event is captured using `find_peaks` from the `scipy` package and looks for a "peak" in the force series. The takeoff event is detected by looking for the first frame of data whereby the force series is below a certain threshold (default is 10 Newtons) for a specific period of time (default is 0.25 seconds). `JumpMetrics` makes these various parameters for detecting events tunable in cases where the defaults may not accurately detect events due to unexpected noise in the data or if there are any changes in the methodology proposed with future research.
 
-![Example countermovement jump force-time trace with events detected during the takeoff phase.](../analyses/study_1/figures/F02/CTRL1/literature_cutoff/force.png){ width=100% }
+![Example countermovement jump force-time trace with events detected during the takeoff phase.](../example_images/force.png){ width=100% }
 
 Figure 4. Example countermovement jump force-time trace with events detected during the takeoff phase.
 
@@ -64,12 +64,12 @@ Figure 4. Example countermovement jump force-time trace with events detected dur
 
 #### Squat Jumps
 Given that the squat jump is intentionally performed with a pause to minimize the influence of the stretch shortening cycle of the lower body muscles from a continuous countermovement (i.e., there is no lowering phase), the only events `JumpMetrics` detects are are the start of the propulsive phase, the peak force event, and the takeoff event. The start of the propulsive phase is the first frame of data that exceeds five times the standard deviation of the force data (default value; this is a tuneable parameter depending on the data collection parameters) during the squat phase. The peak force event is computed similarly to the countermovement jumps whereby `find_peaks` from the `scipy` package and looks for a "peak" in the force series. The takeoff event is detected by looking for the first frame of data whereby the force series is below a certain threshold (default is 10 Newtons) for a specific period of time (default is 0.25 seconds).
-![Example squat jump force-time trace during the takeoff phase.](../analyses/study_3/figures/SQT/P02/3_5/literature_cutoff/force.png){ width=100% }
+![Example squat jump force-time trace during the takeoff phase.](../example_images/force_sqj.png){ width=100% }
 
 Figure 5. Example squat jump force-time trace during the takeoff phase.
 
 Although there is not supposed to be any countermovement/lowering phase during a squat jump, depending on the instructions and guidance provided to the participant, as well as their general movement behaviours, there may be a minor countermovement that would negate the trial from being a true squat jump. `JumpMetrics` detects and flags this motion (with a warning and an estimated frame in the metrics output) to make the user aware of this potential flaw in the squat jump trial.
-![Example squat jump force-time trace with an inappropriate countermovement detected during the takeoff phase.](../analyses/study_3/figures/SQT/P02/1_2/literature_cutoff/force.png){ width=100% }
+![Example squat jump force-time trace with an inappropriate countermovement detected during the takeoff phase.](../example_images/force_sqj2.png){ width=100% }
 
 Figure 6. Example squat jump force-time trace with an inappropriate countermovement detected during the takeoff phase.
 
