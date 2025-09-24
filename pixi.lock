@@ -3578,7 +3578,7 @@ packages:
 - pypi: ./
   name: jumpmetrics
   version: 0.1.0
-  sha256: 89a6449a20f452cbd7725f120157e9fb35f997b70dd57a64300e4885fac012d4
+  sha256: ca4180b97ef84d85d7c44e2a8ab6f4bced168090197bc2ae92fcb5409b965335
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter-1.0.0-pyhd8ed1ab_10.conda
