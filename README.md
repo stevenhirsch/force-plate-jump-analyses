@@ -25,36 +25,26 @@ The `JumpMetrics` package is a completely free, open-source toolkit for analyzin
 *NOTE:* Pending upload to PyPI- This has not been completed yet, so skip Option 1 for now.
 
 Simply run:
-```
+```bash
 pip install jumpmetrics
+```
+
+or if using pixi, run:
+```bash
+pixi add jumpmetrics
 ```
 
 ### Option 2: Direct Installation from GitHub (may be slow due to repo size)
 Ensure that you have `pip` installed in your python environment. Then, just run:
-```
+```bash
 pip install git+https://github.com/stevenhirsch/force-plate-jump-analyses.git 
 ```
 
-### Option 3: Build and Install from a Local Copy
-
-#### Method A: Using pixi (Recommended)
-1. Clone the repository:
+or if using pixi, run:
 ```bash
-git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
-cd force-plate-jump-analyses
+pixi add git+https://github.com/stevenhirsch/force-plate-jump-analyses.git
 ```
 
-2. Set up the environment and build:
-```bash
-pixi install
-pixi shell --feature dev
-pixi run build
-```
-
-3. Install the built package:
-```bash
-pip install dist/jumpmetrics-0.1.0-py3-none-any.whl
-```
 
 #### Method B: Using pip directly
 1. Clone the repository:
@@ -79,7 +69,7 @@ After going through these steps, verify the installation:
 python test_install.py
 ```
 
-### Option 4: Development Setup with pixi
+### Option 3: Development Setup with pixi
 1. Clone the repository:
 ```bash
 git clone https://github.com/stevenhirsch/force-plate-jump-analyses.git
@@ -129,46 +119,7 @@ pixi run build
 pixi run lint
 ```
 
-## Testing and Code Coverage
-
-JumpMetrics maintains a comprehensive test suite to ensure reliability and correctness of the analysis algorithms.
-
-### Test Coverage
-- **Overall Coverage**: 84% (543/650 lines)
-- **Test Suite**: 203 tests including unit tests, integration tests, and edge case validation
-- **Critical Algorithm Coverage**: 100% coverage of event detection, metrics computation, and signal processing modules
-
-### Coverage Breakdown
-| Module | Coverage | Lines Covered |
-|--------|----------|---------------|
-| `events/` | 95%+ | Event detection algorithms |
-| `metrics/` | 100% | Jump metrics computation |
-| `signal_processing/` | 98%+ | Filtering and numerical methods |
-| `core/io.py` | 96% | Data loading and file handling |
-| `core/processors.py` | 66% | Main processor classes |
-
-### Running Tests
-```bash
-# Run all tests
-pixi run test
-
-# Run tests with coverage report
-pixi run test --cov=src/jumpmetrics --cov-report=html
-
-# View detailed coverage report
-open htmlcov/index.html
-```
-
-### Test Philosophy
-The test suite emphasizes:
-- **Comprehensive edge case testing** to ensure robust error handling
-- **Integration tests** with real force plate data to validate end-to-end functionality
-- **Algorithm correctness** verification for all event detection and metrics computation
-- **Graceful failure handling** for unusual or invalid input data
-
-All critical analysis algorithms maintain 100% test coverage, ensuring reliable scientific computations.
-
-### Option 5: Using Docker
+### Option 4: Using Docker
 For users who prefer Docker or desire a reproducible environment across different systems, we also provide a Dockerfile to easily set up and run jumpmetrics. This Dockerfile provides a way for you to separate your environment (the Docker image) from the analysis code (mounted scripts).
 
 1. Build the Docker image:
@@ -316,18 +267,13 @@ results_dict = process_jump_trial(
 )
 ```
 
-Examples of how to batch process data for a study are found in `study_1_batch_process.py`,  `study_2_batch_process.py`, and `study_3_batch_process.py`. You can run either file with a command such as:
-```
-python study_1_batch_process.py
-```
-
 For a complete guide on available functions and their usage, please refer to the [Documentation](./docs/index.md).
 
 ### Example Output
 
 The following is an example of the events that can be detected during the takeoff phase of a vertical jump:
 
-![Example countermovement jump force-time trace with events detected during the takeoff phase.](/analyses/study_1/figures/F02/CTRL1/literature_cutoff/force.png)
+![Example countermovement jump force-time trace with events detected during the takeoff phase.](/example_images/force.png)
 
 
 These events are the foundation for all computed metrics. For a full list of metrics for both the takeoff and landing phases, please refer to the tables in ![](/paper/paper.md).
@@ -343,6 +289,45 @@ If you encounter any issues, please open an [issue on GitHub](https://github.com
 
 ## Contributing
 We welcome contributions from researchers, practitioners, and developers! Please see our [Contributing Guidelines](docs/development/contributing.md) for details on how to get started.
+
+## Testing and Code Coverage
+
+JumpMetrics maintains a comprehensive test suite to ensure reliability and correctness of the analysis algorithms.
+
+### Test Coverage
+- **Overall Coverage**: 84% (543/650 lines)
+- **Test Suite**: 203 tests including unit tests, integration tests, and edge case validation
+- **Critical Algorithm Coverage**: 100% coverage of event detection, metrics computation, and signal processing modules
+
+### Coverage Breakdown
+| Module | Coverage | Lines Covered |
+|--------|----------|---------------|
+| `events/` | 95%+ | Event detection algorithms |
+| `metrics/` | 100% | Jump metrics computation |
+| `signal_processing/` | 98%+ | Filtering and numerical methods |
+| `core/io.py` | 96% | Data loading and file handling |
+| `core/processors.py` | 66% | Main processor classes |
+
+### Running Tests
+```bash
+# Run all tests
+pixi run test
+
+# Run tests with coverage report
+pixi run test --cov=src/jumpmetrics --cov-report=html
+
+# View detailed coverage report
+open htmlcov/index.html
+```
+
+### Test Philosophy
+The test suite emphasizes:
+- **Comprehensive edge case testing** to ensure robust error handling
+- **Integration tests** with real force plate data to validate end-to-end functionality
+- **Algorithm correctness** verification for all event detection and metrics computation
+- **Graceful failure handling** for unusual or invalid input data
+
+All critical analysis algorithms maintain 100% test coverage, ensuring reliable scientific computations.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
