@@ -91,8 +91,11 @@ def load_raw_force_data_with_no_column_headers(filepath: str) -> pd.DataFrame:
         # Read the file, skip the first blank line, and use comma as delimiter
         df = pd.read_csv(filepath, delimiter=',', header=None, skiprows=1)
 
-        # Strip whitespace from all cells
-        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+        # Strip whitespace from all cells - use map for pandas >= 2.1.0, applymap for older versions
+        if hasattr(df, 'map') and hasattr(df.map, '__call__'):
+            df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
+        else:
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
         # Define column names
         cols = ['FX1', 'FY1', 'FZ1', 'MX1', 'MY1', 'MZ1', 'FX2', 'FY2', 'FZ2', 'MX2', 'MY2', 'MZ2']
