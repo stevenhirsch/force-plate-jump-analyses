@@ -12,7 +12,7 @@ authors:
     equal-contrib: true
     affiliation: "1, 2"
   - name: Samuel Howarth
-    equat-contrib: true
+    equal-contrib: true
     affiliation: "2"
 affiliations:
  - name: Tonal Data Science and AI, San Francisco, United States of America
@@ -30,6 +30,20 @@ Researchers and practitioners (e.g., sports team scientists, analysts, or coache
 # Statement of need
 
 `JumpMetrics` is a free, open-source Python package for computing countermovement jump and squat jump events and metrics. Currently, there are no free alternatives for processing force plate data for vertical jumps relative to the numerous proprietary (i.e., closed-source) algorithms sold by commercial force plates companies (e.g., Vald, Hawkin Dynamics). This makes both the analyses, and ensuring reproducibility of results from these analyses, more challenging for the various professionals conducting jump analyses from force plate data. The API for `JumpMetrics` was designed to be modular and easy to use for those familiar with Python. Researchers, data scientists, analysts, and even coaches can examine each jump's takeoff and landing phases individually or together, depending on their needs and research questions. Furthermore, `JumpMetrics` provides various helper functions to prepare the data for detecting events and computing metrics. These helper functions involve cropping longer force traces and digitally low-pass filtering time series data (if these processing steps are required for a researcher or practitioner's particular analysis). In addition to its applications in sports science research and in professional practice, `JumpMetrics` can also be leveraged by undergraduate or graduate students to assist with sport or exercise science-related projects. Finally, the code, docstrings, and documentation provided in this package may help sports science students learn Python programming if they aren't already familiar.
+
+# State of the Field
+
+Force plate analysis for vertical jumps has traditionally been dominated by proprietary software solutions from commercial manufacturers such as Vald (ForceDecks) and Hawkin Dynamics, which provide closed-source algorithms for event detection and metrics computation. While these commercial platforms offer comprehensive solutions, they limit reproducibility and accessibility for researchers and practitioners with budget constraints. Furthermore, although these solutions may provide APIs for practitioners to build their own data pipelines, they offer limited flexibility for tuning the actual algorithms to compute jump-related metrics.
+
+Several open-source tools exist for biomechanical analysis, though none specifically address force plate-based countermovement and squat jump analysis in Python. `biomechZoo` [@dixon:2017] is a MATLAB-based toolbox providing general biomechanical data processing capabilities, including ground reaction force processing. However, it requires MATLAB licensing and is not jump-specific. The R-based `shiny-vertical-jump` application (GPL-3.0 license on GitHub at [mattsams89/shiny-vertical-jump](https://github.com/mattsams89/shiny-vertical-jump)) provides vertical jump analysis functionality but operates within the R ecosystem. Other open-source alternatives like `Chronojump` and video-based tools (e.g., `Kinovea`) utilize different measurement modalities (jump mats or computer vision) rather than force plates.
+
+`JumpMetrics` fills a unique gap as the first Python-based, open-source toolkit specifically designed for force plate analysis of countermovement and squat jumps. By integrating with the scientific Python ecosystem (NumPy, SciPy, pandas, matplotlib), it provides accessible, reproducible jump analysis for researchers, practitioners, and students without licensing costs or proprietary constraints. Furthermore, it provides flexibility to tune analyses based on the unique constraints and needs of researchers and practitioners.
+
+# Software Design
+
+The design of `JumpMetrics` prioritizes modularity, extensibility, and integration with the scientific Python ecosystem. The architecture follows three core principles. First, object-oriented processor classes provide a consistent API across jump types. All processor classes inherit from a common `ForceTimeCurveTakeoffProcessor` base class that handles kinematic calculations (acceleration, velocity, displacement) via numerical integration. Specialized classes (`ForceTimeCurveCMJTakeoffProcessor`, `ForceTimeCurveSQJTakeoffProcessor`, `ForceTimeCurveJumpLandingProcessor`) implement jump-specific event detection algorithms while maintaining a uniform interface for metric computation. Second, the dual-level API design supports both rapid batch processing and fine-grained analysis. The high-level `process_jump_trial()` wrapper function handles complete pipelines (cropping, filtering, event detection, metrics computation) for batch processing scenarios. Alternatively, users can directly instantiate processor classes for granular control over individual processing steps, custom visualizations, or algorithm debugging. Finally, tunable parameters with sensible defaults balance ease-of-use with adaptability. Event detection thresholds, filtering parameters, and phase duration criteria all use default values validated against real force plate data, but remain configurable to accommodate different experimental protocols and data collection methodologies.
+
+This design reflects trade-offs between simplicity and flexibility: default parameters enable immediate use for standard protocols, while exposed parameters allow researchers to adapt algorithms to novel jump variations, research designs, or equipment constraints. Integration with SciPy's signal processing, pandas DataFrames, and matplotlib visualization ensures compatibility with existing scientific Python workflows. 
 
 # How the Library Works
 ## Event Detections and Metrics
@@ -136,6 +150,20 @@ Table 2. Table of general metrics along with potential typical applications. Not
 
 
 Note that `jump_height_flight_time` and `flight_time` are only available when using the `process_jump_trial()` function as both takeoff and landing must be detected to determine the flight time.
+
+# Research Impact
+
+Since its initial release in June 2024, `JumpMetrics` has begun establishing itself within the biomechanics research and sports science communities. The software is currently being used by external researchers and practitioners for force plate jump analysis, with adoption in educational settings for teaching biomechanics concepts in sports science programs.
+
+As the only open-source, Python-based tool specifically designed for force plate countermovement and squat jump analysis, `JumpMetrics` addresses a critical gap in accessible biomechanical analysis tools. The project demonstrates active development and maintains comprehensive test coverage (84% overall, 100% on critical algorithms) across 203 unit and integration tests at the time of publication, ensuring reliability for scientific applications.
+
+The GitHub repository has garnered interest from the biomechanics community with 12 stars and community engagement at the time of writing, indicating recognition of its value for reproducible jump analysis. As the software matures, it will provide a foundation for reproducible research in jump biomechanics, enabling researchers worldwide to apply consistent, validated algorithms without proprietary software constraints.
+
+Beyond immediate research applications, `JumpMetrics` serves as an educational resource for students learning both biomechanical analysis and scientific Python programming, with comprehensive documentation and example workflows demonstrating best practices in sports science data analysis.
+
+# AI Usage Disclosure
+
+No generative AI tools were used in the development of this software, the writing of this manuscript, or the preparation of supporting materials.
 
 # Acknowledgements
 
