@@ -25,7 +25,7 @@ def integrate_area(time, signal, method='trapezoidal') -> np.ndarray:
 
     if method == 'trapezoidal':
         # Compute the area using the trapezoidal rule
-        area = np.trapz(signal, time)
+        area = np.trapezoid(signal, time)
     elif method == 'simpsons':
         # Compute the area using Simpson's rule
         area = simpson(y=signal, x=time)

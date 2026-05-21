@@ -157,10 +157,10 @@ class TestLoadRawForceDataWithNoColumnHeaders:
             ])
             mock_read_csv.return_value = mock_df
 
-            with patch.object(mock_df, 'applymap') as mock_applymap:
-                mock_applymap.return_value = mock_df
+            with patch.object(mock_df, 'map') as mock_map:
+                mock_map.return_value = mock_df
                 result = load_raw_force_data_with_no_column_headers("test.txt")
-                mock_applymap.assert_called_once()
+                mock_map.assert_called_once()
 
     def test_load_file_not_found(self):
         """Test handling of file not found error"""

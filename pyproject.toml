@@ -1,9 +1,35 @@
 [project]
-authors = [{name = "stevenhirsch", email = "stevehirsch94@gmail.com"}]
-dependencies = []
-name = "JumpMetrics"
-requires-python = ">= 3.10"
-version = "0.1.1"
+name = "jumpmetrics"
+version = "0.1.2"
+description = "A Python package for computing countermovement and squat jump events and metrics from force plate data"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Steven Hirsch", email = "stevehirsch94@gmail.com"}]
+requires-python = ">=3.10"
+keywords = ["biomechanics", "force plate", "vertical jump", "countermovement jump", "squat jump", "sports science"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "numpy>=2.0.0",
+    "pandas>=2.0.0",
+    "scipy>=1.14.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/stevenhirsch/force-plate-jump-analyses"
+Repository = "https://github.com/stevenhirsch/force-plate-jump-analyses"
+Documentation = "https://github.com/stevenhirsch/force-plate-jump-analyses/tree/main/docs"
+"Bug Tracker" = "https://github.com/stevenhirsch/force-plate-jump-analyses/issues"
 
 [build-system]
 build-backend = "hatchling.build"
@@ -16,11 +42,12 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 # Base dependencies
 [tool.pixi.dependencies]
 python = ">=3.10"
-pandas = "~=2.0.0"
+numpy = ">=2.0.0"
+pandas = ">=2.0.0"
 matplotlib = "*"
-scipy = "~=1.14.0"
-scikit-learn = "~=1.3.0"
-pip = "~=23.0"
+scipy = ">=1.14.0"
+scikit-learn = ">=1.5.0"
+pip = ">=23.0"
 
 [tool.pixi.pypi-dependencies]
 jumpmetrics = { path = ".", editable = true }
@@ -40,6 +67,7 @@ seaborn = "*"
 [tool.pixi.feature.dev.pypi-dependencies]
 flake8 = "*"
 build = "*"
+twine = "*"
 
 # Testing environment for CI/CD
 [tool.pixi.feature.test.dependencies]

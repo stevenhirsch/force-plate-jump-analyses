@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://badge.fury.io/py/jumpmetrics.svg)](https://pypi.org/project/jumpmetrics/)
 
 ## Overview
 
@@ -20,11 +21,8 @@ The `JumpMetrics` package is a completely free, open-source toolkit for analyzin
 - **Python**: Ensure Python 3.10 or higher is installed.
 - **pixi**: Install [pixi](https://pixi.sh/latest/) on your machine.
 
-### Option 1: Install via PyPI
+### Option 1: Install via PyPI (Recommended)
 
-*NOTE:* Pending upload to PyPI- This has not been completed yet, so skip Option 1 for now.
-
-Simply run:
 ```bash
 pip install jumpmetrics
 ```
