@@ -85,7 +85,7 @@ def process_jump_trial(
     )
     off_forceplate_first_frame = find_frame_when_off_plate(
         force_trace=force_series_after_takeoff[landing_frame:],
-        sampling_frequency=2000
+        sampling_frequency=sampling_frequency
     ) + landing_frame
     if off_forceplate_first_frame is not None:
         landing_force_trace = force_series_after_takeoff[landing_frame:off_forceplate_first_frame]

@@ -181,9 +181,21 @@ If you want to explore this environment interactively, run:
 docker run -it jumpmetrics bash
 ```
 
+## Sample Data
+
+The `sample_data/` directory contains example force plate files you can use immediately to try `jumpmetrics`:
+
+| File | Jump Type | Sampling Frequency |
+|------|-----------|-------------------|
+| `sample_data/cmj_example.txt` | Countermovement Jump (CMJ) | 2000 Hz |
+| `sample_data/sqj_example.txt` | Squat Jump (SQJ) | 1000 Hz |
+
+Note: the two files have different sampling frequencies, so make sure to pass the correct `sampling_frequency` parameter when processing each file.
+
 ## Data Processing
-The following code snippet should help to generally showcase how one could get started quickly with `jumpmetrics` for calculating takeoff metrics:
+The following code snippet shows how to get started quickly with `jumpmetrics` for calculating takeoff metrics. Note that filtering is applied to the **full signal before cropping** to avoid filter border effects at the edges of your analysis window.
 ```python
+import pandas as pd
 from jumpmetrics.core.processors import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import (
     load_raw_force_data_with_no_column_headers, sum_dual_force_components,
@@ -192,39 +204,40 @@ from jumpmetrics.core.io import (
 )
 from jumpmetrics.signal_processing.filters import butterworth_filter
 
-# Load a force dataset
+# Load a force dataset (use sample_data/cmj_example.txt to get started)
 tmp_force_df = load_raw_force_data_with_no_column_headers(filepath)
 # Sum the vertical force components from a data collection that uses dual force plates
 # Note that the goal is to simply just get a force waveform, and these are helper functions to do so
 # However, you could use your own custom code to obtain a force trace for processing
 full_summed_force = sum_dual_force_components(tmp_force_df)
+# Filter the FULL signal first to avoid border effects on the cropped window (optional step)
+# butterworth_filter returns a numpy array, so wrap in pd.Series for downstream functions
+filtered_full_force = pd.Series(butterworth_filter(
+    arr=full_summed_force,
+    cutoff_frequency=50,
+    fps=2000,
+    padding=2000
+))
 # Helper function to help narrow force series to identify when someone is on or off the plate
 frame = find_first_frame_where_force_exceeds_threshold(
-    force_trace=full_summed_force,
+    force_trace=filtered_full_force,
     threshold=1000
 )
 # Helper function to find when someone is off the plate. Can be used to determine the moment of takeoff
 takeoff_frame = find_frame_when_off_plate(
-    force_trace=full_summed_force.iloc[frame:],
+    force_trace=filtered_full_force.iloc[frame:],
     sampling_frequency=2000
 )
 # Cropped force trace provides just the first n seconds before takeoff for processing
- cropped_force_trace = get_n_seconds_before_takeoff(
-            force_trace=full_summed_force,
-            sampling_frequency=2000,
-            takeoff_frame=takeoff_frame,
-            n=TIME_BEFORE_TAKEOFF
+cropped_force_trace = get_n_seconds_before_takeoff(
+    force_trace=filtered_full_force,
+    sampling_frequency=2000,
+    takeoff_frame=takeoff_frame,
+    n=TIME_BEFORE_TAKEOFF
 )
-# Filtering the force trace data (optional step)
-filtered_force_series = butterworth_filter(
-    arr=cropped_force_trace,
-    cutoff_frequency=50,
-    fps=2000,
-    padding=2000
-)
-# Instantiative the takeoff processor class
+# Instantiate the takeoff processor class
 CMJ = ForceTimeCurveCMJTakeoffProcessor(
-    force_series=filtered_force_series,
+    force_series=cropped_force_trace,
     sampling_frequency=2000
 )
 # Get the jump events

@@ -1,6 +1,7 @@
 """Example script demonstrating how to use jumpmetrics in Docker"""
 import os
 import pandas as pd
+
 from jumpmetrics.core.processors import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import (
     load_raw_force_data_with_no_column_headers, sum_dual_force_components,
@@ -14,32 +15,34 @@ def process_jump_trial():
     filepath = '/data/input/F02_CTRL1.txt'
     tmp_force_df = load_raw_force_data_with_no_column_headers(filepath)
     full_summed_force = sum_dual_force_components(tmp_force_df)
+    # Filter the full signal first to avoid border effects on the cropped window
+    # butterworth_filter returns a numpy array, so wrap in pd.Series for downstream functions
+    cutoff_frequency = 50
+    filtered_full_force = pd.Series(butterworth_filter(
+        arr=full_summed_force,
+        cutoff_frequency=cutoff_frequency,
+        fps=2000,
+        padding=2000
+    ))
     frame = find_first_frame_where_force_exceeds_threshold(
-        force_trace=full_summed_force,
+        force_trace=filtered_full_force,
         threshold=1000
     )
     takeoff_frame = find_frame_when_off_plate(
-        force_trace=full_summed_force.iloc[frame:],
+        force_trace=filtered_full_force.iloc[frame:],
         sampling_frequency=2000
     )
     TIME_BEFORE_TAKEOFF = 2
     cropped_force_trace = get_n_seconds_before_takeoff(
-        force_trace=full_summed_force,
+        force_trace=filtered_full_force,
         sampling_frequency=2000,
         takeoff_frame=takeoff_frame,
         n=TIME_BEFORE_TAKEOFF
     )
-    cutoff_frequency = 50 # random value
-    filtered_force_series = butterworth_filter(
-        arr=cropped_force_trace,
-        cutoff_frequency=cutoff_frequency,
-        fps=2000,
-        padding=2000
-    )
-    
+
     # Initialize processor
     processor = ForceTimeCurveCMJTakeoffProcessor(
-        force_series=filtered_force_series,
+        force_series=cropped_force_trace,
         sampling_frequency=2000,  # Standard sampling frequency
         weighing_time=0.4  # Time window for computing body weight
     )
