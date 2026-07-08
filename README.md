@@ -195,6 +195,7 @@ Note: the two files have different sampling frequencies, so make sure to pass th
 ## Data Processing
 The following code snippet shows how to get started quickly with `jumpmetrics` for calculating takeoff metrics. Note that filtering is applied to the **full signal before cropping** to avoid filter border effects at the edges of your analysis window.
 ```python
+import os
 import pandas as pd
 from jumpmetrics.core.processors import ForceTimeCurveCMJTakeoffProcessor
 from jumpmetrics.core.io import (
@@ -203,6 +204,10 @@ from jumpmetrics.core.io import (
     find_frame_when_off_plate, get_n_seconds_before_takeoff
 )
 from jumpmetrics.signal_processing.filters import butterworth_filter
+
+filepath = 'sample_data/cmj_example.txt'
+pid_data_dir = '.'  # directory to save output data to
+TIME_BEFORE_TAKEOFF = 2  # seconds of data to keep before takeoff
 
 # Load a force dataset (use sample_data/cmj_example.txt to get started)
 tmp_force_df = load_raw_force_data_with_no_column_headers(filepath)
@@ -245,7 +250,7 @@ CMJ.get_jump_events()
 # Get the jump metrics
 CMJ.compute_jump_metrics()
 # Create a jump metric dataframe
-CMJ.create_jump_metrics_dataframe()
+CMJ.create_jump_metrics_dataframe(pid='test1')
 # Create a kinematic data dataframe
 CMJ.create_kinematic_dataframe()
 # Plot the waveform data
