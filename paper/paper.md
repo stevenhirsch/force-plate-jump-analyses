@@ -12,6 +12,7 @@ authors:
     equal-contrib: true
     affiliation: "1, 2"
   - name: Samuel Howarth
+    orcid: 0000-0003-3293-6076
     equal-contrib: true
     affiliation: "2"
 affiliations:
