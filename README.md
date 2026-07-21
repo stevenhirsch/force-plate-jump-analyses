@@ -268,6 +268,8 @@ CMJ.save_kinematic_dataframe(
 
 Processing an entire jump (takeoff and landing) can be done using the following code example OR building your own wrapper functions using the landing and takeoff classes.
 ```python
+from jumpmetrics.core.jump_processing import process_jump_trial
+
 tmp_force_df = load_raw_force_data_with_no_column_headers(filepath)
 full_summed_force = sum_dual_force_components(tmp_force_df)
 results_dict = process_jump_trial(
