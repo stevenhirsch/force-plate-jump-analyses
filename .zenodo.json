@@ -1,0 +1,26 @@
+{
+  "title": "JumpMetrics: A Python package computing countermovement and squat jump events and metrics",
+  "description": "JumpMetrics is a free, open-source Python package for computing countermovement jump and squat jump events and metrics from force plate data.",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Hirsch, Steven Mark",
+      "affiliation": "Tonal Data Science and AI, San Francisco, United States of America; Canadian Memorial Chiropractic College, Toronto, Canada",
+      "orcid": "0000-0002-4394-1922"
+    },
+    {
+      "name": "Howarth, Samuel",
+      "affiliation": "Canadian Memorial Chiropractic College, Toronto, Canada",
+      "orcid": "0000-0003-3293-6076"
+    }
+  ],
+  "keywords": [
+    "Python",
+    "Biomechanics",
+    "Force Plates",
+    "Vertical Jump",
+    "Movement Assessment"
+  ],
+  "access_right": "open"
+}
