@@ -1,6 +1,6 @@
 [project]
 name = "jumpmetrics"
-version = "0.1.4"
+version = "0.2.0"
 description = "A Python package for computing countermovement and squat jump events and metrics from force plate data"
 readme = "README.md"
 license = {file = "LICENSE"}

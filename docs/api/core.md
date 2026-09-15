@@ -55,6 +55,41 @@ The class is initialized with a force series and an optional sampling frequency.
 - Saves the kinematic data to a CSV file.
 - Ensures the dataframe has been populated before saving.
 
+## Exported Metrics: Peak Force and Net Vertical Impulse
+
+`compute_jump_metrics` exports several force- and impulse-related keys whose exact definitions are
+not obvious from their names alone:
+
+- **`peak_force`** is the frame of the *first prominent peak* (see `get_peak_force_event` in
+  [`events.md`](events.md)) found at or after the start of the braking phase, not the global maximum
+  of the trace. On a bimodal force-time curve, this correctly captures an earlier, higher peak that
+  precedes the low position. If no peak clears the prominence threshold, `peak_force` is `np.nan`
+  (a warning is logged).
+- **`maximum_force`** is the global maximum of the force series (`np.nanmax`). Use this if you want
+  the single highest recorded force value regardless of peak shape; use `peak_force` if you want the
+  force-plate-community definition of "peak force" as a genuine local maximum of the curve.
+- **`frame_propulsive_peak_force`** is a second, independent peak-force event, searched starting at
+  the start of the propulsive phase (the low position) rather than the start of braking. It exists
+  only to anchor the three `propulsive_peakforce_rfd_*` metrics, which by definition describe the
+  propulsive phase; it is not used for the `peak_force` metric. It can be `NOT_FOUND` (`-100`) more
+  often than `frame_peak_force`, since a jump can have a monotonic rise from the low position to
+  takeoff with no additional prominent peak in between — in that case the three
+  `propulsive_peakforce_rfd_*` metrics are `np.nan`.
+- **Net vertical impulse windows.** All four impulse metrics integrate `force - bodyweight` (the
+  trapezoidal rule) and are related by the impulse-momentum theorem (impulse `= body_mass_kg * Δv`
+  over the same window):
+  - `braking_net_vertical_impulse`: start of braking phase → low position (start of propulsive
+    phase).
+  - `propulsive_net_vertical_impulse`: low position → takeoff (the last frame of the trace).
+  - `braking_to_propulsive_net_vertical_impulse`: start of braking phase → takeoff — the sum of the
+    two windows above.
+  - `total_net_vertical_impulse`: the entire trace (quiet stance → takeoff).
+
+  The braking and propulsive windows deliberately share the low-position sample as their common
+  boundary, so `braking_net_vertical_impulse + propulsive_net_vertical_impulse` equals
+  `braking_to_propulsive_net_vertical_impulse` exactly (to floating-point precision), not
+  approximately.
+
 ## Example Usage
 To use the `ForceTimeCurveCMJTakeoffProcessor`, instantiate the class with a force series and a sampling frequency. Call `get_jump_events` to identify the key events, followed by `compute_jump_metrics` to calculate the metrics. Use `create_jump_metrics_dataframe` and `save_jump_metrics_dataframe` to save the results for further analysis. You can also plot the waveform data using `plot_waveform`.
 

@@ -21,9 +21,8 @@ from jumpmetrics.events.landing_events import (
     get_end_of_landing_phase
 )
 
-PF_B4_BRAKING = 'Peak force occurred before or at the start of the braking phase, metrics between events invalid'
-PF_B4_PROP = 'Peak force occurred before or at the start of the propulsive phase, metrics between events invalid'
 BRAKE_B4_PROP = 'Braking phase occured before or at the start of the propulsive phase, metrics between events invalid'
+PROP_B4_TAKEOFF = 'Propulsive phase started at or after takeoff, metrics between events invalid'
 
 
 class ForceTimeCurveTakeoffProcessor:
@@ -166,6 +165,7 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
         super().__init__(force_series, sampling_frequency, weighing_time)
         self.start_of_unweighting_phase = None
         self.start_of_braking_phase = None
+        self.propulsive_peak_force_frame = None
 
     def get_jump_events(self, unweighting_phase_quiet_period=0.5, unweighting_phase_duration_check=0.175):
         """Function to get jump events for a ForceTimeCurveCMJTakeoffProcessor Class
@@ -184,9 +184,16 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
             displacement_series=self.displacement_series,
             start_of_braking_phase=self.start_of_braking_phase
         )
+        # Peak force is an event of the whole jump, so the search is anchored at braking onset; on
+        # bimodal force profiles the peak precedes the low position. The propulsive peak force is a
+        # separate event, anchored at the propulsive phase, used only by the propulsive RFD metrics.
         self.peak_force_frame = get_peak_force_event(
             force_series=self.force_series,
-            start_of_propulsive_phase=self.start_of_propulsive_phase
+            search_start_frame=self.start_of_braking_phase
+        )
+        self.propulsive_peak_force_frame = get_peak_force_event(
+            force_series=self.force_series,
+            search_start_frame=self.start_of_propulsive_phase
         )
 
     def compute_jump_metrics(self):
@@ -199,21 +206,21 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
         self.jump_metrics['propulsive_peakforce_rfd_slope_between_events'] = compute_rfd(
             force_trace = self.force_series,
             window_start = self.start_of_propulsive_phase,
-            window_end = self.peak_force_frame,
+            window_end = self.propulsive_peak_force_frame,
             sampling_frequency=self.sampling_frequency,
             method='average'
         )
         self.jump_metrics['propulsive_peakforce_rfd_instantaneous_average_between_events'] = compute_rfd(
             force_trace = self.force_series,
             window_start = self.start_of_propulsive_phase,
-            window_end = self.peak_force_frame,
+            window_end = self.propulsive_peak_force_frame,
             sampling_frequency=self.sampling_frequency,
             method='instantaneous'
         )
         self.jump_metrics['propulsive_peakforce_rfd_instantaneous_peak_between_events'] = compute_rfd(
             force_trace = self.force_series,
             window_start = self.start_of_propulsive_phase,
-            window_end = self.peak_force_frame,
+            window_end = self.propulsive_peak_force_frame,
             sampling_frequency=self.sampling_frequency,
             method='peak'
         )
@@ -259,28 +266,45 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
             sampling_frequency=self.sampling_frequency,
             method='peak'
         )
-        if self.peak_force_frame > self.start_of_braking_phase:
-            self.jump_metrics['braking_net_vertical_impulse'] = integrate_area(
-                time=self.time[self.start_of_braking_phase:self.peak_force_frame],
-                signal=self.force_series_minus_bodyweight[self.start_of_braking_phase:self.peak_force_frame]
-            )
-        else:
-            logging.warning(PF_B4_BRAKING)
-            self.jump_metrics['braking_net_vertical_impulse'] = np.nan
-        if self.peak_force_frame > self.start_of_propulsive_phase:
-            self.jump_metrics['propulsive_net_vertical_impulse'] = integrate_area(
-                time=self.time[self.start_of_propulsive_phase:self.peak_force_frame],
-                signal=self.force_series_minus_bodyweight[self.start_of_propulsive_phase:self.peak_force_frame]
-            )
-        else:
-            logging.warning(PF_B4_PROP)
-            self.jump_metrics['propulsive_net_vertical_impulse'] = np.nan
+        # Net vertical impulse over the standard CMJ phase windows (McMahon et al., 2018).
+        # The takeoff frame is the final frame of the force series, so phase windows that run
+        # to takeoff are bounded by n_frames rather than by the peak force event.
+        #
+        # The low position sample is deliberately included in BOTH adjoining windows. The trapezoidal
+        # rule sums the area of the trapezoids BETWEEN consecutive samples, so integrating over n
+        # samples covers only the n-1 intervals they span; both endpoints are needed to cover a
+        # window. Slicing the phases as [brake:prop] and [prop:takeoff] would therefore leave the
+        # interval between samples prop-1 and prop in neither phase, so the braking and propulsive
+        # impulses would not sum to the brake->takeoff impulse (observed on F02_CTRL2: 34.84 + 180.01
+        # = 214.85 against a true 215.08). Sharing the boundary sample makes them exactly additive.
+        n_frames = len(self.force_series)
+        low_position_end = min(self.start_of_propulsive_phase + 1, n_frames)  # +1 to include the boundary
         if self.start_of_propulsive_phase > self.start_of_braking_phase:
-            self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = integrate_area(
-                time=self.time[self.start_of_braking_phase:self.start_of_propulsive_phase],
+            # Braking phase: peak negative velocity -> low position. Equals body_mass * |v_min|.
+            self.jump_metrics['braking_net_vertical_impulse'] = integrate_area(
+                time=self.time[self.start_of_braking_phase:low_position_end],
                 signal=self.force_series_minus_bodyweight[
-                    self.start_of_braking_phase:self.start_of_propulsive_phase
+                    self.start_of_braking_phase:low_position_end
                 ]
+            )
+        else:
+            logging.warning(BRAKE_B4_PROP)
+            self.jump_metrics['braking_net_vertical_impulse'] = np.nan
+        if n_frames > self.start_of_propulsive_phase:
+            # Propulsive phase: low position -> takeoff. Equals body_mass * v_takeoff.
+            self.jump_metrics['propulsive_net_vertical_impulse'] = integrate_area(
+                time=self.time[self.start_of_propulsive_phase:n_frames],
+                signal=self.force_series_minus_bodyweight[self.start_of_propulsive_phase:n_frames]
+            )
+        else:
+            logging.warning(PROP_B4_TAKEOFF)
+            self.jump_metrics['propulsive_net_vertical_impulse'] = np.nan
+        if self.start_of_propulsive_phase > self.start_of_braking_phase and n_frames > self.start_of_braking_phase:
+            # Braking phase through the propulsive phase: braking start -> takeoff. Equals the sum
+            # of the two phase impulses, i.e. body_mass * (v_takeoff - v_min).
+            self.jump_metrics['braking_to_propulsive_net_vertical_impulse'] = integrate_area(
+                time=self.time[self.start_of_braking_phase:n_frames],
+                signal=self.force_series_minus_bodyweight[self.start_of_braking_phase:n_frames]
             )
         else:
             logging.warning(BRAKE_B4_PROP)
@@ -290,7 +314,11 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
             time=self.time,
             signal=self.force_series_minus_bodyweight
         )
-        self.jump_metrics['peak_force'] = self.force_series[self.peak_force_frame]
+        if self.peak_force_frame >= 0:
+            self.jump_metrics['peak_force'] = self.force_series[self.peak_force_frame]
+        else:
+            logging.warning('Peak force event not found, so peak force is invalid. Returning np.nan')
+            self.jump_metrics['peak_force'] = np.nan
         self.jump_metrics['maximum_force'] = np.nanmax(self.force_series)
         self.jump_metrics['average_force_of_braking_phase'] = compute_average_force_between_events(
             force_trace=self.force_series,
@@ -335,6 +363,7 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
         self.jump_metrics['frame_start_of_breaking_phase'] = self.start_of_braking_phase
         self.jump_metrics['frame_start_of_propulsive_phase'] = self.start_of_propulsive_phase
         self.jump_metrics['frame_peak_force'] = self.peak_force_frame
+        self.jump_metrics['frame_propulsive_peak_force'] = self.propulsive_peak_force_frame
 
     def _plot_specific_events(self):
         if self.start_of_unweighting_phase is not None:
@@ -346,7 +375,7 @@ class ForceTimeCurveCMJTakeoffProcessor(ForceTimeCurveTakeoffProcessor):
         if self.start_of_propulsive_phase is not None:
             plt.axvline(self.start_of_propulsive_phase / self.sampling_frequency,
                         color='orange', label='Start of Propulsive Phase')
-        if self.peak_force_frame is not None:
+        if self.peak_force_frame is not None and self.peak_force_frame >= 0:
             plt.axvline(self.peak_force_frame / self.sampling_frequency,
                         color='blue', linestyle='--', label='Peak Force')
 

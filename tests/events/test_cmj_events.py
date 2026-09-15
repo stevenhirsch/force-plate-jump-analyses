@@ -6,7 +6,8 @@ from jumpmetrics.events.cmj_events import (
     find_unweighting_start,
     get_start_of_braking_phase_using_velocity,
     get_start_of_propulsive_phase_using_displacement,
-    get_peak_force_event
+    get_peak_force_event,
+    NOT_FOUND
 )
 
 
@@ -307,96 +308,120 @@ class TestGetStartOfPropulsivePhaseUsingDisplacement:
 
 
 class TestGetPeakForceEvent:
-    """Test get_peak_force_event function"""
+    """Test get_peak_force_event function.
 
-    def test_clear_peak_detection(self):
-        """Test detection of clear force peak"""
-        # Create force series with prominent peak
-        force_series = np.array([1000, 1200, 1500, 1800, 1600, 1300, 1000])
-        start_of_propulsive_phase = 1
+    These tests use real force arrays rather than mocking find_peaks. The peak selection rule
+    (first prominent peak at or after the search start) is the behaviour worth testing, and
+    stubbing find_peaks would remove exactly that.
+    """
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
-            mock_find_peaks.return_value = (np.array([2]), {})  # Peak at relative index 2
+    @staticmethod
+    def _ramp(start_value, end_value, n):
+        """Linear ramp helper, endpoint excluded so segments can be concatenated."""
+        return np.linspace(start_value, end_value, n, endpoint=False)
 
-            result = get_peak_force_event(force_series, start_of_propulsive_phase)
+    def _bimodal_trace(self):
+        """Force trace whose FIRST peak is the higher one (the profile from issue #2).
 
-            assert result == 3  # 1 + 2
+        Braking starts at frame 10, the first (higher) peak is at frame 60, the low position
+        is at frame 90, and the second (lower) peak is at frame 130.
+        """
+        return np.concatenate([
+            self._ramp(800, 800, 10),    # 0-9    quiet
+            self._ramp(800, 2000, 50),   # 10-59  braking, force rising
+            self._ramp(2000, 1500, 30),  # 60-89  first peak at 59/60, force falling
+            self._ramp(1500, 1800, 40),  # 90-129 propulsive, force rising again
+            self._ramp(1800, 0, 30),     # 130+   second, lower peak then takeoff
+        ])
 
-    def test_no_prominent_peaks(self):
-        """Test when no prominent peaks are found"""
-        force_series = np.array([1000, 1050, 1100, 1080, 1020, 1000])
-        start_of_propulsive_phase = 1
+    def test_returns_first_prominent_peak_not_the_largest(self):
+        """Multiple prominent peaks: the FIRST is returned, by design."""
+        force_series = np.concatenate([
+            self._ramp(800, 1500, 20),
+            self._ramp(1500, 1000, 20),
+            self._ramp(1000, 2000, 20),   # larger, later peak
+            self._ramp(2000, 0, 20),
+        ])
+        result = get_peak_force_event(force_series, search_start_frame=0)
+        assert result == 20  # the first peak, even though frame 60 is higher
+        assert force_series[result] < np.max(force_series)
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
-            mock_find_peaks.return_value = (np.array([]), {})  # No peaks found
+    def test_bimodal_peak_before_low_position_is_found(self):
+        """Regression test for issue #2.
 
-            result = get_peak_force_event(force_series, start_of_propulsive_phase)
+        On a bimodal trace whose first peak is higher and precedes the low position, searching
+        from the braking phase finds the true peak; searching from the propulsive phase misses
+        it and returns the smaller second peak.
+        """
+        force_series = self._bimodal_trace()
+        start_of_braking_phase = 10
+        start_of_propulsive_phase = 90
 
-            # ACTUAL BEHAVIOR: Falls back to argmax of force_series[1:], finds max at index 1,
-            # so result = 1 + 1 = 2
-            assert result == 2
+        from_braking = get_peak_force_event(force_series, search_start_frame=start_of_braking_phase)
+        from_propulsive = get_peak_force_event(force_series, search_start_frame=start_of_propulsive_phase)
 
-    def test_multiple_peaks(self):
-        """Test when multiple peaks are found"""
-        force_series = np.array([1000, 1200, 1500, 1300, 1600, 1200, 1000])
-        start_of_propulsive_phase = 1
+        assert from_braking == int(np.argmax(force_series))
+        assert from_braking < start_of_propulsive_phase
+        assert from_propulsive > start_of_propulsive_phase
+        assert force_series[from_propulsive] < force_series[from_braking]
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
-            mock_find_peaks.return_value = (np.array([1, 3]), {})  # Multiple peaks
+    def test_search_start_frame_excludes_earlier_peaks(self):
+        """A prominent peak before search_start_frame is not returned."""
+        force_series = np.concatenate([
+            self._ramp(800, 1200, 15),   # early peak at frame 15
+            self._ramp(1200, 700, 15),
+            self._ramp(700, 2000, 30),   # true jump peak at frame 60
+            self._ramp(2000, 0, 20),
+        ])
+        assert get_peak_force_event(force_series, search_start_frame=0) == 15
+        assert get_peak_force_event(force_series, search_start_frame=30) == 60
 
-            result = get_peak_force_event(force_series, start_of_propulsive_phase)
+    def test_offset_is_applied_to_returned_frame(self):
+        """The returned frame is absolute, not relative to the search window."""
+        force_series = self._bimodal_trace()
+        absolute = get_peak_force_event(force_series, search_start_frame=0)
+        offset = get_peak_force_event(force_series[40:], search_start_frame=0) + 40
+        assert get_peak_force_event(force_series, search_start_frame=40) == offset
+        assert absolute == 60
 
-            # Should return first peak
-            assert result == 2  # 1 + 1
+    def test_returns_not_found_when_no_prominent_peak(self):
+        """Monotonic force has no prominent peak, so the event is undefined."""
+        force_series = np.linspace(1500, 1000, 50)
+        assert get_peak_force_event(force_series, search_start_frame=0) == NOT_FOUND
 
-    def test_peak_at_start_of_propulsive_phase(self):
-        """Test when peak occurs at start of propulsive phase"""
-        force_series = np.array([1000, 1500, 1200, 1100, 1000])
-        start_of_propulsive_phase = 1
+    def test_returns_not_found_for_constant_force(self):
+        """Constant force has no prominent peak."""
+        force_series = np.full(50, 1200.0)
+        assert get_peak_force_event(force_series, search_start_frame=0) == NOT_FOUND
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
-            mock_find_peaks.return_value = (np.array([0]), {})  # Peak at first position
+    def test_no_prominent_peak_logs_a_warning(self):
+        """The undetected-peak case is surfaced to the user, not silent."""
+        force_series = np.linspace(1500, 1000, 50)
+        with patch('logging.warning') as mock_warning:
+            get_peak_force_event(force_series, search_start_frame=0)
+        assert mock_warning.called
 
-            result = get_peak_force_event(force_series, start_of_propulsive_phase)
+    def test_prominence_is_tunable(self):
+        """A peak below the default prominence is found when prominence is lowered."""
+        force_series = np.concatenate([
+            self._ramp(1000, 1020, 20),   # only 20 N of prominence
+            self._ramp(1020, 1000, 20),
+        ])
+        assert get_peak_force_event(force_series, search_start_frame=0) == NOT_FOUND
+        assert get_peak_force_event(force_series, search_start_frame=0, prominence=10) == 20
 
-            assert result == 1  # 1 + 0
+    def test_invalid_search_start_falls_back_to_whole_series(self):
+        """A sentinel or None search start searches the entire trace and warns."""
+        force_series = self._bimodal_trace()
+        expected = get_peak_force_event(force_series, search_start_frame=0)
+        for invalid in (None, NOT_FOUND, -1):
+            with patch('logging.warning') as mock_warning:
+                assert get_peak_force_event(force_series, search_start_frame=invalid) == expected
+            assert mock_warning.called
 
-    def test_monotonic_decreasing_force(self):
-        """Test with monotonically decreasing force"""
-        force_series = np.array([1000, 1500, 1400, 1300, 1200, 1100])
-        start_of_propulsive_phase = 1
-
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
-            mock_find_peaks.return_value = (np.array([]), {})  # No peaks
-
-            result = get_peak_force_event(force_series, start_of_propulsive_phase)
-
-            # Should return first index (highest value)
-            assert result == 1  # 1 + 0
-
-    def test_constant_force(self):
-        """Test with constant force values"""
-        force_series = np.array([1000, 1200, 1200, 1200, 1200])
-        start_of_propulsive_phase = 1
-
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
-            mock_find_peaks.return_value = (np.array([]), {})  # No peaks
-
-            result = get_peak_force_event(force_series, start_of_propulsive_phase)
-
-            # Should return first occurrence of max value
-            assert result == 1  # 1 + 0
-
-    def test_noise_in_force_signal(self):
-        """Test with noisy force signal"""
-        np.random.seed(42)
-        base_force = np.array([1000, 1200, 1500, 1300, 1100])
-        noise = np.random.normal(0, 20, len(base_force))
-        force_series = base_force + noise
-        start_of_propulsive_phase = 1
-
-        # Should still detect peak around index 2 despite noise
-        result = get_peak_force_event(force_series, start_of_propulsive_phase)
-
-        # Result should be reasonable (between 1 and 4)
-        assert 1 <= result <= 4
+    def test_noise_does_not_create_a_spurious_peak(self):
+        """Small-amplitude noise is rejected by the prominence threshold."""
+        rng = np.random.default_rng(42)
+        clean = self._bimodal_trace()
+        noisy = clean + rng.normal(0, 5, len(clean))
+        assert get_peak_force_event(noisy, search_start_frame=10) == 60
