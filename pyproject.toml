@@ -33,9 +33,9 @@ Documentation = "https://github.com/stevenhirsch/force-plate-jump-analyses/tree/
 
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
+requires = ["hatchling<1.32"]
 
-[tool.pixi.project]
+[tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
