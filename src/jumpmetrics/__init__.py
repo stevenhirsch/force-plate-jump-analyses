@@ -4,4 +4,4 @@ from .events import *
 from .metrics import *
 from .signal_processing import *
 
-__version__ = "0.1.4"
+__version__ = "0.2.0"

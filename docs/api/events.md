@@ -65,11 +65,29 @@ Finds the start of the propulsive phase using displacement data.
 
 #### `get_peak_force_event`
 
-Identifies the peak force event during the propulsive phase using force data.
+Identifies the peak force event of the jump, defined as the first prominent peak in the force series
+after `search_start_frame`. Peak detection uses `find_peaks` from `scipy`; see scipy's documentation
+for more information about prominence. Note that `find_peaks` cannot flag the first sample of the
+searched slice as a peak (a peak needs a neighbour on both sides), so a genuine peak located exactly
+at `search_start_frame` will not be detected there.
+
+For a countermovement jump, `search_start_frame` should be the start of the braking phase. Peak force
+can occur before the low position on bimodal force profiles, so anchoring the search at the start of
+the propulsive phase misses the true peak on those jumps. Braking onset is where force rises back
+through bodyweight, so the first prominent peak after it is the first genuine force peak of the jump,
+while peaks during quiet stance and within the unweighting dip are excluded.
+
+Note that this returns the *first* prominent peak in the search window, not the largest one. Use the
+`maximum_force` metric for the global maximum of the trace.
 
 **Parameters**:
 - `force_series (array)`: Array of force data.
-- `start_of_propulsive_phase (int)`: Frame number corresponding to the start of the propulsive phase.
+- `search_start_frame (int)`: Frame to begin searching for a peak from. For a countermovement jump
+  this should be the start of the braking phase. If `None` or negative, the entire force series is
+  searched and a warning is logged.
+- `prominence (float, optional)`: Minimum prominence for a peak to be detected. Defaults to `50`.
 
 **Returns**:
-- `int`: Frame number corresponding to the peak force.
+- `int`: Frame number corresponding to the peak force, or `NOT_FOUND` (`-100`) if no peak of the
+  required prominence was detected. A warning is logged in that case, and downstream metrics that
+  depend on this event return `np.nan`.

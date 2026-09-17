@@ -146,7 +146,7 @@ class TestGetSqjPeakForceEvent:
         force_series = np.array([800, 1000, 1300, 1600, 1400, 1100, 800])
         start_of_propulsive_phase = 1
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
+        with patch('jumpmetrics.events.sqj_events.find_peaks') as mock_find_peaks:
             mock_find_peaks.return_value = (np.array([2]), {})  # Peak at relative index 2
 
             result = get_sqj_peak_force_event(force_series, start_of_propulsive_phase)
@@ -158,7 +158,7 @@ class TestGetSqjPeakForceEvent:
         force_series = np.array([800, 850, 900, 880, 820, 800])
         start_of_propulsive_phase = 1
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
+        with patch('jumpmetrics.events.sqj_events.find_peaks') as mock_find_peaks:
             mock_find_peaks.return_value = (np.array([]), {})  # No peaks found
 
             result = get_sqj_peak_force_event(force_series, start_of_propulsive_phase)
@@ -172,7 +172,7 @@ class TestGetSqjPeakForceEvent:
         force_series = np.array([800, 1000, 1300, 1100, 1400, 1000, 800])
         start_of_propulsive_phase = 1
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
+        with patch('jumpmetrics.events.sqj_events.find_peaks') as mock_find_peaks:
             mock_find_peaks.return_value = (np.array([1, 3]), {})  # Multiple peaks
 
             result = get_sqj_peak_force_event(force_series, start_of_propulsive_phase)
@@ -196,7 +196,7 @@ class TestGetSqjPeakForceEvent:
         force_series = np.array([800, 1300, 1000, 900, 800])
         start_of_propulsive_phase = 1
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
+        with patch('jumpmetrics.events.sqj_events.find_peaks') as mock_find_peaks:
             mock_find_peaks.return_value = (np.array([0]), {})  # Peak at first position
 
             result = get_sqj_peak_force_event(force_series, start_of_propulsive_phase)
@@ -208,7 +208,7 @@ class TestGetSqjPeakForceEvent:
         force_series = np.array([800, 1200, 1100, 1000, 900, 800])
         start_of_propulsive_phase = 1
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
+        with patch('jumpmetrics.events.sqj_events.find_peaks') as mock_find_peaks:
             mock_find_peaks.return_value = (np.array([]), {})  # No peaks
 
             result = get_sqj_peak_force_event(force_series, start_of_propulsive_phase)
@@ -221,7 +221,7 @@ class TestGetSqjPeakForceEvent:
         force_series = np.array([800, 1000, 1000, 1000, 1000])
         start_of_propulsive_phase = 1
 
-        with patch('scipy.signal.find_peaks') as mock_find_peaks:
+        with patch('jumpmetrics.events.sqj_events.find_peaks') as mock_find_peaks:
             mock_find_peaks.return_value = (np.array([]), {})  # No peaks
 
             result = get_sqj_peak_force_event(force_series, start_of_propulsive_phase)

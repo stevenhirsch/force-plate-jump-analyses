@@ -2,8 +2,12 @@
 import os
 import numpy as np
 import pandas as pd
+import pytest
+import matplotlib.pyplot as plt
 from jumpmetrics.core.io import load_cropped_force_data
+from jumpmetrics.events.cmj_events import NOT_FOUND
 from jumpmetrics.signal_processing.filters import butterworth_filter
+from jumpmetrics.signal_processing.numerical import integrate_area
 from jumpmetrics.core.processors import (
     ForceTimeCurveCMJTakeoffProcessor, ForceTimeCurveSQJTakeoffProcessor, ForceTimeCurveJumpLandingProcessor
 )
@@ -196,6 +200,152 @@ def test_ForceTimeCurveCMJTakeoffProcessor_3():
         CMJ.jump_metrics_dataframe.drop('PID', axis=1).values
     )[0]
     assert np.all(diffs < ERROR_THRESHOLD)
+
+
+IMPULSE_WINDOW_TEST_TRIALS = ['F02_CTRL2', 'M07_CTRL1', 'M15_CTRL1']
+IMPULSE_RELATIVE_TOLERANCE = 0.01
+
+
+def _process_cmj_trial_for_impulse_checks(file_prefix: str) -> ForceTimeCurveCMJTakeoffProcessor:
+    """Helper to reprocess one of the bundled CMJ fixtures for the impulse-window tests below"""
+    testfile = os.path.join(data_dir, file_prefix + '_filtered.txt')
+    force_series = load_cropped_force_data(filepath=testfile, freq=None)
+    filtered_force_series = butterworth_filter(
+        arr=force_series,
+        cutoff_frequency=GROUP_CUTOFF_FREQUENCY,
+        fps=2000,
+        padding=2000
+    )
+    CMJ = ForceTimeCurveCMJTakeoffProcessor(
+        force_series=filtered_force_series[-4000:],
+        sampling_frequency=2000
+    )
+    CMJ.get_jump_events()
+    CMJ.compute_jump_metrics()
+    return CMJ
+
+
+def test_impulse_windows_are_additive_and_match_momentum_identities():
+    """The three net-vertical-impulse windows must partition the trial without gaps or overlaps
+    (braking + propulsive == braking-to-propulsive, exactly, since all three are trapezoidal
+    integrals of the same signal), and each impulse must equal the momentum change over its own
+    window (impulse-momentum theorem), since start_of_propulsive_phase is the velocity
+    zero-crossing (the low position), so velocity there is ~0 and propulsive_net_vertical_impulse
+    ~= body_mass_kg * takeoff_velocity.
+    """
+    for file_prefix in IMPULSE_WINDOW_TEST_TRIALS:
+        CMJ = _process_cmj_trial_for_impulse_checks(file_prefix)
+        body_mass_kg = CMJ.body_mass_kg
+        velocity = CMJ.velocity_series
+        start_of_braking_phase = CMJ.start_of_braking_phase
+        start_of_propulsive_phase = CMJ.start_of_propulsive_phase
+
+        braking_nvi = CMJ.jump_metrics['braking_net_vertical_impulse']
+        propulsive_nvi = CMJ.jump_metrics['propulsive_net_vertical_impulse']
+        braking_to_propulsive_nvi = CMJ.jump_metrics['braking_to_propulsive_net_vertical_impulse']
+        total_nvi = CMJ.jump_metrics['total_net_vertical_impulse']
+        takeoff_velocity = velocity[-1]
+
+        # Additivity: the two phase windows share their boundary sample, so they must sum exactly
+        # to the combined braking-to-propulsive window (same integrator, same signal).
+        assert braking_nvi + propulsive_nvi == pytest.approx(braking_to_propulsive_nvi, abs=1e-9), (
+            f'{file_prefix}: braking_nvi + propulsive_nvi != braking_to_propulsive_nvi'
+        )
+
+        # Impulse-momentum theorem, per window.
+        expected_braking_nvi = body_mass_kg * (
+            velocity[start_of_propulsive_phase] - velocity[start_of_braking_phase]
+        )
+        assert braking_nvi == pytest.approx(expected_braking_nvi, rel=IMPULSE_RELATIVE_TOLERANCE), (
+            f'{file_prefix}: braking_nvi does not match body_mass_kg * delta-v over the braking window'
+        )
+
+        expected_propulsive_nvi = body_mass_kg * takeoff_velocity
+        assert propulsive_nvi == pytest.approx(expected_propulsive_nvi, rel=IMPULSE_RELATIVE_TOLERANCE), (
+            f'{file_prefix}: propulsive_nvi does not match body_mass_kg * takeoff_velocity'
+        )
+
+        expected_total_nvi = body_mass_kg * takeoff_velocity
+        assert total_nvi == pytest.approx(expected_total_nvi, rel=IMPULSE_RELATIVE_TOLERANCE), (
+            f'{file_prefix}: total_net_vertical_impulse does not match body_mass_kg * takeoff_velocity'
+        )
+
+
+def test_impulse_window_additivity_catches_a_wrong_boundary():
+    """Regression guard for the additivity check itself: if the braking window no longer shares its
+    boundary sample with the propulsive window (e.g. `low_position_end` loses its `+1`), the two
+    phase impulses must stop summing exactly to the combined window, and the additivity assertion
+    above must be able to catch it.
+    """
+    CMJ = _process_cmj_trial_for_impulse_checks('F02_CTRL2')
+    start_of_propulsive_phase = CMJ.start_of_propulsive_phase
+    n_frames = len(CMJ.force_series)
+
+    # Reproduce the pre-fix, non-shared-boundary windows directly, bypassing the processor.
+    broken_braking_nvi = integrate_area(
+        time=CMJ.time[CMJ.start_of_braking_phase:start_of_propulsive_phase],
+        signal=CMJ.force_series_minus_bodyweight[CMJ.start_of_braking_phase:start_of_propulsive_phase]
+    )
+    broken_propulsive_nvi = integrate_area(
+        time=CMJ.time[start_of_propulsive_phase:n_frames],
+        signal=CMJ.force_series_minus_bodyweight[start_of_propulsive_phase:n_frames]
+    )
+    broken_sum = broken_braking_nvi + broken_propulsive_nvi
+    braking_to_propulsive_nvi = CMJ.jump_metrics['braking_to_propulsive_net_vertical_impulse']
+
+    assert broken_sum != pytest.approx(braking_to_propulsive_nvi, abs=1e-9), (
+        'Expected dropping the shared boundary sample to break additivity, but it still summed exactly '
+        '- the additivity assertion would not have caught this regression'
+    )
+
+
+def test_plot_specific_events_skips_peak_force_when_not_found():
+    """`get_peak_force_event` can now return NOT_FOUND (-100) instead of always falling back to
+    argmax, so `_plot_specific_events` must not draw a 'Peak Force' line for that sentinel.
+    """
+    CMJ = _process_cmj_trial_for_impulse_checks('F02_CTRL2')
+    CMJ.peak_force_frame = NOT_FOUND
+
+    plt.figure()
+    CMJ._plot_specific_events()  # pylint: disable=protected-access
+    line_labels = [line.get_label() for line in plt.gca().get_lines()]
+    plt.close()
+
+    assert 'Peak Force' not in line_labels
+
+
+def test_peak_force_detects_bimodal_pre_low_position_peak():
+    """F04_CTRL2 is a real trial with a genuinely bimodal force-time curve: the true peak occurs
+    well before the low position, exactly the shape from the original bug report (issue #2). This
+    pins the fix: `peak_force_frame` must be found by the braking-anchored search, i.e. it must fall
+    before `start_of_propulsive_phase` -- a frame the old propulsive-anchored search could never
+    have returned, since it never looked there.
+    """
+    CMJ = _process_cmj_trial_for_impulse_checks('F04_CTRL2')
+
+    # The true peak is before the low position - only reachable by a braking-anchored search.
+    assert CMJ.peak_force_frame < CMJ.start_of_propulsive_phase
+    assert not np.isnan(CMJ.jump_metrics['peak_force'])
+
+
+def test_propulsive_peak_force_not_found_on_monotonic_propulsive_phase():
+    """M06_CTRL3 is a real trial with no additional prominent peak between the low position and
+    takeoff, so the propulsive-anchored search (used only for the propulsive_peakforce_rfd_*
+    metrics) legitimately finds nothing. This exercises the `NOT_FOUND` path end-to-end: previously
+    masked by an `np.argmax` fallback, `frame_propulsive_peak_force` must now be `NOT_FOUND` and the
+    three RFD metrics that depend on it must be `np.nan`, while `peak_force` itself (found by the
+    separate, braking-anchored search) must remain valid.
+    """
+    CMJ = _process_cmj_trial_for_impulse_checks('M06_CTRL3')
+
+    assert CMJ.propulsive_peak_force_frame == NOT_FOUND
+    assert not np.isnan(CMJ.jump_metrics['peak_force'])
+    for metric in [
+        'propulsive_peakforce_rfd_slope_between_events',
+        'propulsive_peakforce_rfd_instantaneous_average_between_events',
+        'propulsive_peakforce_rfd_instantaneous_peak_between_events',
+    ]:
+        assert np.isnan(CMJ.jump_metrics[metric]), f'{metric} should be NaN when the propulsive peak is not found'
 
 
 # Integration Test 4

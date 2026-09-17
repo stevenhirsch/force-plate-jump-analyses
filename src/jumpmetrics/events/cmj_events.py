@@ -128,27 +128,45 @@ def get_start_of_propulsive_phase_using_displacement(displacement_series, start_
         logging.warning('Not using braking phase to help find propulsive phase')
         return int(np.argmin(displacement_series))
 
-def get_peak_force_event(force_series, start_of_propulsive_phase: int) -> int:
-    """Find the frame associated with the "peak" of a waveform. Note that this looks for a peak after
-    the start of the propulsive phase, which requires a certain prominence to be detected. Please see
-    scipy's find_peaks() documentation for more information about prominence.
+def get_peak_force_event(force_series, search_start_frame: int, prominence: float = 50) -> int:
+    """Find the frame associated with the first prominent "peak" of a force waveform after
+    search_start_frame. Please see scipy's find_peaks() documentation for more information about
+    prominence.
+
+    Note that scipy's find_peaks() cannot flag the first sample of the searched slice as a peak (a
+    peak needs a neighbour on both sides), so a genuine peak located exactly at search_start_frame
+    will not be detected there; the next prominent peak after it is returned instead.
+
+    Note that this returns the FIRST prominent peak in the search window, not the largest one. Use
+    the maximum_force metric for the global maximum of the trace.
+
+    For a countermovement jump, search_start_frame should be the start of the braking phase. Peak
+    force can occur before the low position on bimodal force profiles, so anchoring the search at the
+    start of the propulsive phase misses the true peak on those jumps. Braking onset is where force
+    rises back through bodyweight, so the first prominent peak after it is the first genuine force
+    peak of the jump, while peaks during quiet stance and within the unweighting dip are excluded.
 
     Args:
         force_series (array): Force waveform
-        start_of_propulsive_phase (int): Frame associated with the start of the propulsive phase
+        search_start_frame (int): Frame to begin searching for a peak from. For a countermovement
+            jump this should be the start of the braking phase.
+        prominence (float, optional): Minimum prominence for a peak to be detected. Defaults to 50.
 
     Returns:
-        int: Frame corresponding to the peak force
+        int: Frame corresponding to the peak force, or NOT_FOUND if no prominent peak was detected
     """
-    if start_of_propulsive_phase is None or start_of_propulsive_phase < 0:
-        logging.warning('Invalid propulsive phase start, using global maximum for peak force detection')
-        return int(np.argmax(force_series))
+    if search_start_frame is None or search_start_frame < 0:
+        logging.warning('Invalid peak force search start frame, searching the entire force series')
+        search_start_frame = 0
 
     peaks, _ = find_peaks(
-        force_series[start_of_propulsive_phase:], prominence=50
+        force_series[search_start_frame:], prominence=prominence
     )
     if len(peaks) == 0:
-        peak_force_frame = int(np.argmax(force_series[start_of_propulsive_phase:]) + start_of_propulsive_phase)
-    else:
-        peak_force_frame = int(peaks[0] + start_of_propulsive_phase)
-    return peak_force_frame
+        logging.warning(
+            'No peak with a prominence of %s detected at or after frame %s, so the peak force event '
+            'could not be determined. Consider lowering the prominence for this trace.',
+            prominence, search_start_frame
+        )
+        return NOT_FOUND
+    return int(peaks[0] + search_start_frame)
